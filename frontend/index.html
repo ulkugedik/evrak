@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Öğrenci Uygulama Evrakları Portalı (Geliştirici 1 - Frontend)</title>
+    <title>Öğrenci Uygulama Evrakları Portalı</title>
     <!-- Google Fonts & FontAwesome Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +13,7 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Main Header & Role Selector -->
+        <!-- Main Header -->
         <header class="main-header">
             <div class="header-brand">
                 <div class="brand-icon">
@@ -21,16 +21,10 @@
                 </div>
                 <div>
                     <h1>Öğrenci Uygulama Evrakları Portalı</h1>
-                    <p>Geliştirici 1: Öğrenci Portalı & Belge Yükleme Arayüzü</p>
+                    <p>T.C. Üniversite Sağlık Bilimleri Uygulama ve Staj Portalı</p>
                 </div>
             </div>
             <div class="header-actions">
-                <button type="button" class="btn btn-outline" id="btn-login-trigger" style="margin-right: 8px;">
-                    <i class="fa-solid fa-right-to-bracket"></i> Yetkili Girişi
-                </button>
-                <button type="button" class="btn btn-danger hidden" id="btn-logout" style="margin-right: 8px;">
-                    <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
-                </button>
                 <button type="button" class="btn btn-outline" id="btnDraftSave">
                     <i class="fa-solid fa-floppy-disk"></i> Taslağı Kaydet
                 </button>
@@ -48,7 +42,7 @@
             </div>
         </div>
 
-        <!-- Student Portal Navigation Tabs (Geliştirici 1 Scope) -->
+        <!-- Student Navigation Tabs -->
         <nav class="nav-tabs" role="tablist">
             <button type="button" class="tab-btn active" data-tab="tab-student" role="tab">
                 <i class="fa-solid fa-id-card"></i> 1. Öğrenci Temel Bilgileri
@@ -76,18 +70,18 @@
                         <label for="studentNo" class="required">Öğrenci Numarası</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-hashtag input-icon"></i>
-                            <input type="text" id="studentNo" name="studentNo" placeholder="Örn: 2024105001" required>
+                            <input type="text" id="studentNo" name="studentNo" inputmode="numeric" maxlength="12" placeholder="Örn: 2024105001" required>
                         </div>
-                        <small class="hint">Sistemden otomatik aktarılır veya manuel girilir.</small>
+                        <small class="hint">Sadece rakam girilebilir (Maksimum 12 hane).</small>
                     </div>
 
                     <div class="form-group">
                         <label for="tcNo">T.C. Kimlik Numarası</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-id-card input-icon"></i>
-                            <input type="text" id="tcNo" name="tcNo" maxlength="11" placeholder="11 Haneli T.C. Kimlik No">
+                            <input type="text" id="tcNo" name="tcNo" inputmode="numeric" maxlength="11" placeholder="XXXXXXXXXXX (11 Rakam)">
                         </div>
-                        <small class="hint">Gerektiğinde kurum onayları için istenir.</small>
+                        <small class="hint">Sadece 11 haneli rakam girilebilir, harf kabul edilmez.</small>
                     </div>
 
                     <div class="form-group full-width">
@@ -96,6 +90,7 @@
                             <i class="fa-solid fa-user-tag input-icon"></i>
                             <input type="text" id="fullName" name="fullName" placeholder="Adınız ve Soyadınız" required>
                         </div>
+                        <small class="hint">Sadece harf ve boşluk girilebilir.</small>
                     </div>
 
                     <div class="form-group">
@@ -135,8 +130,9 @@
                         <label for="phone" class="required">Telefon Numarası</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-phone input-icon"></i>
-                            <input type="tel" id="phone" name="phone" placeholder="05XX XXX XX XX" required>
+                            <input type="tel" id="phone" name="phone" inputmode="numeric" maxlength="15" placeholder="05XX XXX XX XX" required>
                         </div>
+                        <small class="hint">Format: 05XX XXX XX XX (Sadece rakam girilebilir).</small>
                     </div>
 
                     <div class="form-group">
@@ -145,6 +141,7 @@
                             <i class="fa-solid fa-envelope input-icon"></i>
                             <input type="email" id="email" name="email" placeholder="ogrenci@ogrenci.edu.tr" required>
                         </div>
+                        <small class="hint">Örn: ad.soyad@ogrenci.edu.tr</small>
                     </div>
 
                     <div class="form-group full-width">
@@ -460,7 +457,6 @@
             </section>
 
         </form>
-        <div id="dashboard-container" class="hidden"></div>
     </div>
 
     <!-- Submission Summary Modal -->
@@ -469,7 +465,7 @@
             <div class="modal-header">
                 <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
                 <h2>Başvuru ve Evrak Kaydı Başarılı!</h2>
-                <p>Geliştirici 1 - Öğrenci uygulama evrakları sisteme iletildi.</p>
+                <p>Öğrenci uygulama evrakları sisteme iletildi.</p>
             </div>
             <div class="modal-body">
                 <div class="summary-box" id="summaryContent"></div>
@@ -485,41 +481,9 @@
         </div>
     </div>
 
-    <!-- Yetkili Giriş Modalı -->
-    <div class="modal-overlay" id="loginModal">
-        <div class="modal-card" style="max-width: 400px; padding: 25px; background: rgba(17, 24, 39, 0.95); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
-            <div class="modal-header" style="text-align: center; border: none; padding: 0; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
-                <div class="lock-icon" style="font-size: 2.2rem; background: rgba(59, 130, 246, 0.1); color: #3b82f6; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
-                    <i class="fa-solid fa-lock"></i>
-                </div>
-                <h2 style="margin: 10px 0 0 0; font-size: 1.4rem; color: #fff;">Yetkili Personel Girişi</h2>
-                <p style="margin: 4px 0 0 0; color: #94a3b8; font-size: 0.85rem;">Takip ekranlarına erişmek için kimlik doğrulaması yapın.</p>
-            </div>
-            <div class="modal-body" style="padding: 0; display: flex; flex-direction: column; gap: 15px;">
-                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
-                    <label for="login-username" style="font-size: 0.8rem; color: #94a3b8; font-weight: 500;">Kullanıcı Adı</label>
-                    <input type="text" id="login-username" placeholder="danisman veya saglik" style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:#fff; font-size: 0.9rem; outline: none; box-sizing: border-box;">
-                </div>
-                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
-                    <label for="login-password" style="font-size: 0.8rem; color: #94a3b8; font-weight: 500;">Şifre</label>
-                    <input type="password" id="login-password" placeholder="Şifre girin (123)" style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:#fff; font-size: 0.9rem; outline: none; box-sizing: border-box;">
-                </div>
-                <div id="login-error-msg" class="hidden" style="color:#ef4444; font-size:0.8rem; text-align: center; margin-top: 5px;">
-                    ❌ Hatalı kullanıcı adı veya şifre! (Şifre: 123)
-                </div>
-            </div>
-            <div class="modal-footer" style="border: none; padding: 0; margin-top: 24px; display: flex; gap: 12px;">
-                <button type="button" class="btn btn-outline" id="btn-close-login" style="flex: 1; padding: 10px;">İptal</button>
-                <button type="button" class="btn btn-primary" id="btn-submit-login" style="flex: 1; padding: 10px; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: #fff; font-weight: 600; cursor: pointer; border-radius: 8px;">Giriş Yap</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Script Imports according to Architecture Document (Photo 3) -->
+    <!-- Script Imports -->
     <script src="js/db.js"></script>
     <script src="js/app.js"></script>
     <script src="js/student.js"></script>
-    <script src="js/advisor.js"></script>
-    <script src="js/health.js"></script>
 </body>
 </html>
