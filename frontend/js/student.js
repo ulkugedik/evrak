@@ -268,12 +268,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (e.target.files && e.target.files.length > 0) {
                     const file = e.target.files[0];
                     const fileName = file.name;
-                    const fileUrl = URL.createObjectURL(file);
-
-                    uploadedFileMap[fileId] = {
-                        name: fileName,
-                        url: fileUrl
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        uploadedFileMap[fileId] = {
+                            name: fileName,
+                            url: evt.target.result // Base64 Data URL
+                        };
+                        if (window.updateProgress) window.updateProgress();
                     };
+                    reader.readAsDataURL(file);
 
                     if (nameDisplay) nameDisplay.textContent = fileName;
                     if (box) box.classList.add('has-file');
@@ -292,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // FORM GÖNDERİMİ, ÖZET & TEK SAYFA PDF İÇİN DOSYA LİNKLERİ
     // ----------------------------------------------------------------------
     if (studentForm) {
-        studentForm.addEventListener('submit', (e) => {
+        studentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             // Zorunlu alan kontrolü
@@ -330,7 +334,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const formData = new FormData(studentForm);
+            const appId = 'APP-' + Date.now();
+
+            // Dosyaları IndexedDB'ye kaydet ve tamamlanmasını bekle
+            const fileSavePromises = [];
+            const fileKeys = ['doc1_file', 'doc2_file', 'doc3_file', 'doc4_file', 'doc5_file', 'doc6_file', 'doc7_file', 'hepatitisTestFile', 'vaccineCardFile'];
+            
+            fileKeys.forEach(key => {
+                const fileData = uploadedFileMap[key];
+                if (fileData) {
+                    fileSavePromises.push(window.FileStorage.saveFile(`${appId}_${key}`, fileData));
+                }
+            });
+
+            try {
+                await Promise.all(fileSavePromises);
+            } catch (err) {
+                console.error('Dosyalar kaydedilirken hata oluştu:', err);
+                alert('Dosyalar kaydedilemedi! Lütfen tekrar deneyiniz.');
+                return;
+            }
+
             const studentRecord = {
+                id: appId,
                 studentNo: formData.get('studentNo'),
                 fullName: formData.get('fullName'),
                 tcNo: formData.get('tcNo'),
@@ -351,40 +377,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 hepatitisTested: formData.get('hepatitisTested'),
                 hepatitisTestDate: formData.get('hepatitisTestDate'),
 
-                // Belge Detayları & Dosya Bağlantıları
+                // Belge Detayları & Dosya Bağlantıları (IndexedDB Referansları)
                 doc1_date: formData.get('doc1_date'),
                 doc1_file_name: uploadedFileMap['doc1_file'] ? uploadedFileMap['doc1_file'].name : null,
-                doc1_file_url: uploadedFileMap['doc1_file'] ? uploadedFileMap['doc1_file'].url : null,
+                doc1_file_url: uploadedFileMap['doc1_file'] ? `IndexedDB:${appId}_doc1_file` : null,
 
                 doc2_examDate: formData.get('doc2_examDate'),
                 doc2_expiryDate: formData.get('doc2_expiryDate'),
                 doc2_file_name: uploadedFileMap['doc2_file'] ? uploadedFileMap['doc2_file'].name : null,
-                doc2_file_url: uploadedFileMap['doc2_file'] ? uploadedFileMap['doc2_file'].url : null,
+                doc2_file_url: uploadedFileMap['doc2_file'] ? `IndexedDB:${appId}_doc2_file` : null,
 
                 doc3_physicalCount: formData.get('doc3_physicalCount'),
                 doc3_file_name: uploadedFileMap['doc3_file'] ? uploadedFileMap['doc3_file'].name : null,
-                doc3_file_url: uploadedFileMap['doc3_file'] ? uploadedFileMap['doc3_file'].url : null,
+                doc3_file_url: uploadedFileMap['doc3_file'] ? `IndexedDB:${appId}_doc3_file` : null,
 
                 doc4_file_name: uploadedFileMap['doc4_file'] ? uploadedFileMap['doc4_file'].name : null,
-                doc4_file_url: uploadedFileMap['doc4_file'] ? uploadedFileMap['doc4_file'].url : null,
+                doc4_file_url: uploadedFileMap['doc4_file'] ? `IndexedDB:${appId}_doc4_file` : null,
 
                 doc5_date: formData.get('doc5_date'),
                 doc5_file_name: uploadedFileMap['doc5_file'] ? uploadedFileMap['doc5_file'].name : null,
-                doc5_file_url: uploadedFileMap['doc5_file'] ? uploadedFileMap['doc5_file'].url : null,
+                doc5_file_url: uploadedFileMap['doc5_file'] ? `IndexedDB:${appId}_doc5_file` : null,
 
                 doc6_date: formData.get('doc6_date'),
                 doc6_file_name: uploadedFileMap['doc6_file'] ? uploadedFileMap['doc6_file'].name : null,
-                doc6_file_url: uploadedFileMap['doc6_file'] ? uploadedFileMap['doc6_file'].url : null,
+                doc6_file_url: uploadedFileMap['doc6_file'] ? `IndexedDB:${appId}_doc6_file` : null,
 
                 doc7_date: formData.get('doc7_date'),
                 doc7_file_name: uploadedFileMap['doc7_file'] ? uploadedFileMap['doc7_file'].name : null,
-                doc7_file_url: uploadedFileMap['doc7_file'] ? uploadedFileMap['doc7_file'].url : null,
+                doc7_file_url: uploadedFileMap['doc7_file'] ? `IndexedDB:${appId}_doc7_file` : null,
 
                 // Hepatit B Dosyaları
                 hepatitisTest_file_name: uploadedFileMap['hepatitisTestFile'] ? uploadedFileMap['hepatitisTestFile'].name : null,
-                hepatitisTest_file_url: uploadedFileMap['hepatitisTestFile'] ? uploadedFileMap['hepatitisTestFile'].url : null,
+                hepatitisTest_file_url: uploadedFileMap['hepatitisTestFile'] ? `IndexedDB:${appId}_hepatitisTestFile` : null,
                 vaccineCard_file_name: uploadedFileMap['vaccineCardFile'] ? uploadedFileMap['vaccineCardFile'].name : null,
-                vaccineCard_file_url: uploadedFileMap['vaccineCardFile'] ? uploadedFileMap['vaccineCardFile'].url : null,
+                vaccineCard_file_url: uploadedFileMap['vaccineCardFile'] ? `IndexedDB:${appId}_vaccineCardFile` : null,
 
                 submissionDate: new Date().toISOString()
             };
