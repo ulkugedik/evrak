@@ -23,7 +23,9 @@
             idCard: "Kimlik Fotokopisi",
             hemogram: "Hemogram Tetkik Raporu",
             elisa: "ELISA Tetkik Raporu",
-            chestXray: "Akciğer Grafisi Raporu"
+            chestXray: "Akciğer Grafisi Raporu",
+            hepatitisTest: "Hepatit B Tetkik Raporu",
+            vaccineCard: "Hepatit B Aşı Kartı"
         };
 
         function getApplications() {
@@ -31,6 +33,15 @@
                 return window.AppDB.getAllApplications();
             }
             return JSON.parse(localStorage.getItem('db_applications') || '[]');
+        }
+
+        function saveApps(apps) {
+            if (window.AppDB) {
+                window.AppDB.applications = apps;
+                window.AppDB.saveApplicationsToStorage();
+            } else {
+                localStorage.setItem('db_applications', JSON.stringify(apps));
+            }
         }
 
         function renderDashboard() {
@@ -194,9 +205,10 @@
             filteredApps.forEach(app => {
                 const statuses = app.documentsStatus || {};
                 const keys = Object.keys(statuses);
-                const totalDocs = keys.length;
-                const approvedCount = keys.filter(k => statuses[k].status === 'Onaylandı').length;
-                const pendingCount = keys.filter(k => statuses[k].status === 'Bekliyor').length;
+                const activeKeys = keys.filter(k => statuses[k].status !== 'Yüklenmedi');
+                const totalDocs = activeKeys.length;
+                const approvedCount = activeKeys.filter(k => statuses[k].status === 'Onaylandı').length;
+                const pendingCount = activeKeys.filter(k => statuses[k].status === 'Bekliyor').length;
 
                 let progressBadgeClass = 'badge-pending';
                 let progressBadgeText = `${approvedCount}/${totalDocs} Onaylandı`;
@@ -312,6 +324,132 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        <!-- Sağlık & Aşı Takip Formu (7. Madde Gereği) -->
+                        <div class="health-tracking-section" style="margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 20px;">
+                            <h5 style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-heart-pulse" style="color: var(--danger);"></i>
+                                Hepatit B & Aşı Takip Bilgileri
+                            </h5>
+                            
+                            <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px;">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                                    <div>
+                                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Hepatit B Tetkiki Yapıldı mı?</label>
+                                        <div style="font-weight: 700; font-size: 0.95rem; color: ${app.hepatitisTested === 'Evet' ? 'green' : 'red'};">
+                                            ${app.hepatitisTested === 'Evet' ? 'Evet, Yapıldı' : 'Hayır, Yapılmadı'}
+                                        </div>
+                                    </div>
+                                    
+                                    ${app.hepatitisTested === 'Evet' ? `
+                                    <div>
+                                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Tetkik Tarihi</label>
+                                        <div style="font-size: 0.95rem;">${formatDate(app.hepatitisTestDate)}</div>
+                                    </div>
+                                    ` : ''}
+                                    
+                                    <div>
+                                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Tetkik Değerlendirme Durumu</label>
+                                        <select class="select-hep-eval" data-student-id="${app.id}" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem;">
+                                            <option value="Sonuç bekleniyor" ${app.tetkikDegerlendirmeDurumu === 'Sonuç bekleniyor' ? 'selected' : ''}>Sonuç bekleniyor</option>
+                                            <option value="Bağışık" ${app.tetkikDegerlendirmeDurumu === 'Bağışık' ? 'selected' : ''}>Bağışık</option>
+                                            <option value="Aşı gerekli" ${app.tetkikDegerlendirmeDurumu === 'Aşı gerekli' ? 'selected' : ''}>Aşı gerekli</option>
+                                            <option value="Ek değerlendirme gerekli" ${app.tetkikDegerlendirmeDurumu === 'Ek değerlendirme gerekli' ? 'selected' : ''}>Ek değerlendirme gerekli</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Aşı Listesine Dahil mi?</label>
+                                        <select class="select-vaccine-list" data-student-id="${app.id}" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem;">
+                                            <option value="Hayır" ${app.asiListesineDahilMi === 'Hayır' ? 'selected' : ''}>Hayır</option>
+                                            <option value="Evet" ${app.asiListesineDahilMi === 'Evet' ? 'selected' : ''}>Evet</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Aşı Kartı & Belgesi ve Kontrolü -->
+                                <div style="border-top: 1px solid var(--border); padding-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                                    <div>
+                                        <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); display: block;">Öğrenci Aşı Kartı:</span>
+                                        ${(statuses.vaccineCard && (statuses.vaccineCard.fileUrl || statuses.vaccineCard.fileName)) ? `
+                                            <a href="${statuses.vaccineCard.fileUrl}" target="_blank" download="${statuses.vaccineCard.fileName}" style="font-size: 0.85rem; color: #2563eb; font-weight: 600; text-decoration: underline;">
+                                                <i class="fa-solid fa-file-pdf"></i> ${statuses.vaccineCard.fileName}
+                                            </a>
+                                        ` : `
+                                            <span style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">Henüz dosya yüklenmedi</span>
+                                        `}
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">Aşı Kartı Kontrolü:</span>
+                                        <select class="select-vaccine-card-status" data-student-id="${app.id}" style="padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.85rem;">
+                                            <option value="Bekliyor" ${(statuses.vaccineCard && statuses.vaccineCard.status === 'Bekliyor') ? 'selected' : ''}>Bekliyor</option>
+                                            <option value="Uygun" ${(statuses.vaccineCard && statuses.vaccineCard.status === 'Uygun') ? 'selected' : ''}>Uygun</option>
+                                            <option value="Eksik-Hatalı" ${(statuses.vaccineCard && statuses.vaccineCard.status === 'Eksik-Hatalı') ? 'selected' : ''}>Eksik-Hatalı</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Aşı Dozları Listesi -->
+                            <div class="vaccine-doses-wrapper" style="display: ${app.asiListesineDahilMi === 'Evet' ? 'block' : 'none'};">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <h6 style="margin: 0; font-size: 0.9rem; color: var(--text-main);">Aşı Doz Geçmişi / Planı</h6>
+                                    <button type="button" class="btn btn-outline btn-sm btn-add-dose" data-student-id="${app.id}">
+                                        <i class="fa-solid fa-plus"></i> Doz Ekle
+                                    </button>
+                                </div>
+                                
+                                <div class="doses-table-container">
+                                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;" class="doses-table">
+                                        <thead>
+                                            <tr style="background: #f1f5f9; border-bottom: 2px solid var(--border);">
+                                                <th style="padding: 8px; width: 120px;">Doz No</th>
+                                                <th style="padding: 8px; width: 140px;">Aşı Tarihi</th>
+                                                <th style="padding: 8px;">Yapıldığı Kurum</th>
+                                                <th style="padding: 8px; text-align: right; width: 60px;">İşlem</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${(app.vaccineDoses && app.vaccineDoses.length > 0) ? app.vaccineDoses.map((dose, doseIndex) => `
+                                                <tr style="border-bottom: 1px solid var(--border);">
+                                                    <td style="padding: 8px; font-weight: 600;">
+                                                        <select class="select-dose-no" data-student-id="${app.id}" data-dose-index="${doseIndex}" style="padding: 4px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8rem; width: 100%;">
+                                                            <option value="1. Doz" ${dose.doseNo === '1. Doz' ? 'selected' : ''}>1. Doz</option>
+                                                            <option value="2. Doz" ${dose.doseNo === '2. Doz' ? 'selected' : ''}>2. Doz</option>
+                                                            <option value="3. Doz" ${dose.doseNo === '3. Doz' ? 'selected' : ''}>3. Doz</option>
+                                                            <option value="Ek Doz" ${dose.doseNo === 'Ek Doz' ? 'selected' : ''}>Ek Doz</option>
+                                                        </select>
+                                                    </td>
+                                                    <td style="padding: 8px;">
+                                                        <input type="date" class="input-dose-date" data-student-id="${app.id}" data-dose-index="${doseIndex}" value="${dose.date || ''}" style="padding: 4px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8rem; width: 100%;">
+                                                    </td>
+                                                    <td style="padding: 8px;">
+                                                        <select class="select-dose-inst" data-student-id="${app.id}" data-dose-index="${doseIndex}" style="padding: 4px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8rem; width: 100%;">
+                                                            <option value="Aile Sağlığı Merkezi (ASM)" ${dose.institution === 'Aile Sağlığı Merkezi (ASM)' ? 'selected' : ''}>Aile Sağlığı Merkezi (ASM)</option>
+                                                            <option value="İl Sağlık Müdürlüğü" ${dose.institution === 'İl Sağlık Müdürlüğü' ? 'selected' : ''}>İl Sağlık Müdürlüğü</option>
+                                                            <option value="Üniversite Hastanesi" ${dose.institution === 'Üniversite Hastanesi' ? 'selected' : ''}>Üniversite Hastanesi</option>
+                                                            <option value="Özel Hastane" ${dose.institution === 'Özel Hastane' ? 'selected' : ''}>Özel Hastane</option>
+                                                            <option value="Diğer" ${dose.institution === 'Diğer' ? 'selected' : ''}>Diğer</option>
+                                                        </select>
+                                                    </td>
+                                                    <td style="padding: 8px; text-align: right;">
+                                                        <button type="button" class="btn btn-danger btn-sm btn-del-dose" data-student-id="${app.id}" data-dose-index="${doseIndex}" style="padding: 3px 6px; font-size: 0.75rem;">
+                                                            <i class="fa-solid fa-trash-can"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            `).join('') : `
+                                                <tr>
+                                                    <td colspan="4" style="padding: 12px; text-align: center; color: var(--text-muted); font-style: italic;">
+                                                        Kayıtlı aşı dozu bulunmamaktadır.
+                                                    </td>
+                                                </tr>
+                                            `}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 `;
 
@@ -359,6 +497,139 @@
                             alert('Başvuru reddedildi ve Çöp Kutusuna taşındı.');
                             renderDashboard();
                         }
+                    }
+                });
+            });
+
+            // Tetkik Değerlendirme Değişikliği (7. Madde Gereği)
+            listContainer.querySelectorAll('.select-hep-eval').forEach(select => {
+                select.addEventListener('change', e => {
+                    const studentId = select.getAttribute('data-student-id');
+                    const val = e.target.value;
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app) {
+                        app.tetkikDegerlendirmeDurumu = val;
+                        // Eğer aşı gerekliyse otomatik aşı listesine al
+                        if (val === 'Aşı gerekli') {
+                            app.asiListesineDahilMi = 'Evet';
+                        }
+                        saveApps(apps);
+                        renderDashboard();
+                    }
+                });
+            });
+
+            // Aşı Listesi Katılım Değişikliği (7. Madde Gereği)
+            listContainer.querySelectorAll('.select-vaccine-list').forEach(select => {
+                select.addEventListener('change', e => {
+                    const studentId = select.getAttribute('data-student-id');
+                    const val = e.target.value;
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app) {
+                        app.asiListesineDahilMi = val;
+                        saveApps(apps);
+                        renderDashboard();
+                    }
+                });
+            });
+
+            // Aşı Kartı Kontrol Durumu Değişikliği (7. Madde Gereği)
+            listContainer.querySelectorAll('.select-vaccine-card-status').forEach(select => {
+                select.addEventListener('change', e => {
+                    const studentId = select.getAttribute('data-student-id');
+                    const val = e.target.value;
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app) {
+                        if (!app.documentsStatus) app.documentsStatus = {};
+                        if (!app.documentsStatus.vaccineCard) app.documentsStatus.vaccineCard = { status: 'Bekliyor' };
+                        app.documentsStatus.vaccineCard.status = val;
+                        saveApps(apps);
+                        renderDashboard();
+                    }
+                });
+            });
+
+            // Doz Ekleme
+            listContainer.querySelectorAll('.btn-add-dose').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    const studentId = btn.getAttribute('data-student-id');
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app) {
+                        if (!app.vaccineDoses) app.vaccineDoses = [];
+                        const nextDoseNum = app.vaccineDoses.length + 1;
+                        const nextDoseLabel = nextDoseNum <= 3 ? `${nextDoseNum}. Doz` : 'Ek Doz';
+                        app.vaccineDoses.push({
+                            doseNo: nextDoseLabel,
+                            date: '',
+                            institution: 'Aile Sağlığı Merkezi (ASM)',
+                            status: 'Bekliyor'
+                        });
+                        saveApps(apps);
+                        renderDashboard();
+                    }
+                });
+            });
+
+            // Doz Silme
+            listContainer.querySelectorAll('.btn-del-dose').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    const studentId = btn.getAttribute('data-student-id');
+                    const doseIndex = parseInt(btn.getAttribute('data-dose-index'));
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app && app.vaccineDoses) {
+                        app.vaccineDoses.splice(doseIndex, 1);
+                        saveApps(apps);
+                        renderDashboard();
+                    }
+                });
+            });
+
+            // Doz No Değişikliği
+            listContainer.querySelectorAll('.select-dose-no').forEach(select => {
+                select.addEventListener('change', e => {
+                    const studentId = select.getAttribute('data-student-id');
+                    const doseIndex = parseInt(select.getAttribute('data-dose-index'));
+                    const val = e.target.value;
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app && app.vaccineDoses && app.vaccineDoses[doseIndex]) {
+                        app.vaccineDoses[doseIndex].doseNo = val;
+                        saveApps(apps);
+                    }
+                });
+            });
+
+            // Aşı Tarihi Değişikliği
+            listContainer.querySelectorAll('.input-dose-date').forEach(input => {
+                input.addEventListener('change', e => {
+                    const studentId = input.getAttribute('data-student-id');
+                    const doseIndex = parseInt(input.getAttribute('data-dose-index'));
+                    const val = e.target.value;
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app && app.vaccineDoses && app.vaccineDoses[doseIndex]) {
+                        app.vaccineDoses[doseIndex].date = val;
+                        saveApps(apps);
+                    }
+                });
+            });
+
+            // Aşı Kurumu Değişikliği
+            listContainer.querySelectorAll('.select-dose-inst').forEach(select => {
+                select.addEventListener('change', e => {
+                    const studentId = select.getAttribute('data-student-id');
+                    const doseIndex = parseInt(select.getAttribute('data-dose-index'));
+                    const val = e.target.value;
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app && app.vaccineDoses && app.vaccineDoses[doseIndex]) {
+                        app.vaccineDoses[doseIndex].institution = val;
+                        saveApps(apps);
                     }
                 });
             });

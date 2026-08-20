@@ -186,6 +186,49 @@ document.addEventListener('DOMContentLoaded', () => {
     updateCourseOptions();
 
     // ----------------------------------------------------------------------
+    // HEPATİT TETKİKİ YAPILDI MI KONTROLÜ & ALAN GÖSTERİMİ
+    // ----------------------------------------------------------------------
+    const hepatitisTestedSelect = document.getElementById('hepatitisTested');
+    const groupHepDate = document.getElementById('group-hep-date');
+    const groupHepFile = document.getElementById('group-hep-file');
+    const hepatitisTestDateInput = document.getElementById('hepatitisTestDate');
+    const hepatitisTestFileInput = document.getElementById('hepatitisTestFile');
+
+    if (hepatitisTestedSelect) {
+        const toggleHepatitisFields = () => {
+            const val = hepatitisTestedSelect.value;
+            if (val === 'Evet') {
+                if (groupHepDate) groupHepDate.style.display = 'block';
+                if (groupHepFile) groupHepFile.style.display = 'block';
+                if (hepatitisTestDateInput) hepatitisTestDateInput.setAttribute('required', 'true');
+                if (hepatitisTestFileInput) hepatitisTestFileInput.setAttribute('required', 'true');
+            } else {
+                if (groupHepDate) groupHepDate.style.display = 'none';
+                if (groupHepFile) groupHepFile.style.display = 'none';
+                if (hepatitisTestDateInput) {
+                    hepatitisTestDateInput.removeAttribute('required');
+                    hepatitisTestDateInput.value = '';
+                }
+                if (hepatitisTestFileInput) {
+                    hepatitisTestFileInput.removeAttribute('required');
+                    hepatitisTestFileInput.value = '';
+                    const box = hepatitisTestFileInput.closest('.file-upload-box');
+                    if (box) {
+                        box.classList.remove('has-file');
+                        const display = box.querySelector('.file-name-display');
+                        if (display) display.textContent = 'Tetkik Sonuç Belgesi Seçiniz (PDF/JPG)';
+                    }
+                    delete uploadedFileMap['hepatitisTestFile'];
+                }
+            }
+            if (window.updateProgress) window.updateProgress();
+        };
+
+        hepatitisTestedSelect.addEventListener('change', toggleHepatitisFields);
+        toggleHepatitisFields();
+    }
+
+    // ----------------------------------------------------------------------
     // OTOMATİK TARİH HESABI (İşe Giriş / Periyodik Muayene - 1 Yıl Bitiş)
     // ----------------------------------------------------------------------
     const doc2ExamDate = document.getElementById('doc2_examDate');
@@ -304,6 +347,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 applicationDays: formData.get('applicationDays'),
                 responsibleInstructor: formData.get('responsibleInstructor'),
 
+                // Hepatit B Bilgileri
+                hepatitisTested: formData.get('hepatitisTested'),
+                hepatitisTestDate: formData.get('hepatitisTestDate'),
+
                 // Belge Detayları & Dosya Bağlantıları
                 doc1_date: formData.get('doc1_date'),
                 doc1_file_name: uploadedFileMap['doc1_file'] ? uploadedFileMap['doc1_file'].name : null,
@@ -333,6 +380,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 doc7_file_name: uploadedFileMap['doc7_file'] ? uploadedFileMap['doc7_file'].name : null,
                 doc7_file_url: uploadedFileMap['doc7_file'] ? uploadedFileMap['doc7_file'].url : null,
 
+                // Hepatit B Dosyaları
+                hepatitisTest_file_name: uploadedFileMap['hepatitisTestFile'] ? uploadedFileMap['hepatitisTestFile'].name : null,
+                hepatitisTest_file_url: uploadedFileMap['hepatitisTestFile'] ? uploadedFileMap['hepatitisTestFile'].url : null,
+                vaccineCard_file_name: uploadedFileMap['vaccineCardFile'] ? uploadedFileMap['vaccineCardFile'].name : null,
+                vaccineCard_file_url: uploadedFileMap['vaccineCardFile'] ? uploadedFileMap['vaccineCardFile'].url : null,
+
                 submissionDate: new Date().toISOString()
             };
 
@@ -349,7 +402,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 doc4_file: "Kimlik Fotokopisi",
                 doc5_file: "Hemogram Tetkik Belgesi",
                 doc6_file: "ELISA Tetkik Belgesi",
-                doc7_file: "Akciğer Grafisi / Raporu"
+                doc7_file: "Akciğer Grafisi / Raporu",
+                hepatitisTestFile: "Hepatit B Tetkik Belgesi",
+                vaccineCardFile: "Hepatit B Aşı Kartı"
             };
 
             let fileLinksHtml = '<ul class="print-file-links-list" style="margin-top: 8px; padding-left: 20px;">';
@@ -380,11 +435,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const successModal = document.getElementById('successModal');
 
             if (summaryContent) {
+                let hepStatusText = studentRecord.hepatitisTested === 'Evet' 
+                    ? `Evet (Tarih: ${new Date(studentRecord.hepatitisTestDate).toLocaleDateString('tr-TR')})` 
+                    : 'Hayır, Yapılmadı';
+
                 summaryContent.innerHTML = `
                     <div class="pdf-print-container" style="font-size: 0.85rem; line-height: 1.4;">
                         <div style="border-bottom: 2px solid #2563eb; padding-bottom: 8px; margin-bottom: 12px; text-align: center;">
                             <h3 style="font-size: 1.1rem; color: #0f172a; margin: 0;">Sağlık Bilimleri Uygulama ve Staj Formu</h3>
-                            <span style="font-size: 0.75rem; color: #64748b;">Başvuru Kayıt Raporu ve Ek Belgeler</span>
+                            <span style="font-size: 0.75rem; color: #64748b;">Balıkesir Üniversitesi - Başvuru Kayıt Raporu</span>
                         </div>
 
                         <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
@@ -419,6 +478,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             <tr>
                                 <td style="padding: 4px 8px; border: 1px solid #cbd5e1; font-weight: 700; background: #f8fafc;">Uygulama Günleri / Sorumlu:</td>
                                 <td style="padding: 4px 8px; border: 1px solid #cbd5e1;">${studentRecord.applicationDays} / ${studentRecord.responsibleInstructor}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1; font-weight: 700; background: #f8fafc;">Hepatit B Tetkiki:</td>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1; font-weight: bold; color: ${studentRecord.hepatitisTested === 'Evet' ? 'green' : 'red'};">${hepStatusText}</td>
                             </tr>
                         </table>
 
