@@ -140,7 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
         btnLoginTrigger.addEventListener('click', () => {
             loginUsernameInput.value = '';
             loginPasswordInput.value = '';
-            if (loginErrorMsg) loginErrorMsg.classList.add('hidden');
+            if (loginErrorMsg) {
+                loginErrorMsg.classList.add('hidden');
+                loginErrorMsg.style.display = 'none';
+            }
             loginModal.classList.add('active');
         });
     }
@@ -169,8 +172,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (btnLoginTrigger) btnLoginTrigger.classList.add('hidden');
                 if (btnLogout) btnLogout.classList.remove('hidden');
                 showAuthorizedView('health');
+            } else if (username === 'admin' && (password === 'admin' || password === '123')) {
+                // Admin Girişi Başarılı
+                loginModal.classList.remove('active');
+                if (btnLoginTrigger) btnLoginTrigger.classList.add('hidden');
+                if (btnLogout) btnLogout.classList.remove('hidden');
+                showAuthorizedView('admin');
             } else {
-                if (loginErrorMsg) loginErrorMsg.classList.remove('hidden');
+                if (loginErrorMsg) {
+                    loginErrorMsg.classList.remove('hidden');
+                    loginErrorMsg.style.display = 'flex';
+                }
             }
         });
 
@@ -208,18 +220,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 dashboardContainer.innerHTML = '';
             }
 
-            if (role === 'advisor') {
-                if (window.initDanismanPortali) {
-                    window.initDanismanPortali(dashboardContainer);
-                } else {
-                    dashboardContainer.innerHTML = '<div class="system-notice"><p>Danışman modülü bulunamadı.</p></div>';
-                }
-            } else if (role === 'health') {
-                if (window.initSaglikPortali) {
-                    window.initSaglikPortali(dashboardContainer);
-                } else {
-                    dashboardContainer.innerHTML = '<div class="system-notice"><p>Sağlık modülü bulunamadı.</p></div>';
-                }
+            // Tüm yetkili girişleri tek bir birleşik panele yönlendirilir
+            if (window.initDanismanPortali) {
+                window.initDanismanPortali(dashboardContainer);
+            } else {
+                dashboardContainer.innerHTML = '<div class="system-notice"><p>Yönetim paneli yüklenemedi.</p></div>';
             }
         }
     }
