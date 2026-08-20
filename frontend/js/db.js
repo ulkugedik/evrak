@@ -101,6 +101,9 @@ window.AppDB = {
             id: 'APP-' + Date.now(),
             isTrash: false,
             ...data,
+            tetkikDegerlendirmeDurumu: 'Sonuç bekleniyor',
+            asiListesineDahilMi: 'Hayır',
+            vaccineDoses: [],
             documentsStatus: {
                 isgCertificate: { status: 'Bekliyor', date: data.doc1_date || null, fileName: data.doc1_file_name || null, fileUrl: data.doc1_file_url || null },
                 medicalForm: { status: 'Bekliyor', date: data.doc2_examDate || null, expiryDate: data.doc2_expiryDate || null, fileName: data.doc2_file_name || null, fileUrl: data.doc2_file_url || null },
@@ -108,7 +111,9 @@ window.AppDB = {
                 idCard: { status: 'Bekliyor', fileName: data.doc4_file_name || null, fileUrl: data.doc4_file_url || null },
                 hemogram: { status: 'Bekliyor', date: data.doc5_date || null, fileName: data.doc5_file_name || null, fileUrl: data.doc5_file_url || null },
                 elisa: { status: 'Bekliyor', date: data.doc6_date || null, fileName: data.doc6_file_name || null, fileUrl: data.doc6_file_url || null },
-                chestXray: { status: 'Bekliyor', date: data.doc7_date || null, fileName: data.doc7_file_name || null, fileUrl: data.doc7_file_url || null }
+                chestXray: { status: 'Bekliyor', date: data.doc7_date || null, fileName: data.doc7_file_name || null, fileUrl: data.doc7_file_url || null },
+                hepatitisTest: { status: data.hepatitisTested === 'Evet' ? 'Bekliyor' : 'Yüklenmedi', date: data.hepatitisTestDate || null, fileName: data.hepatitisTest_file_name || null, fileUrl: data.hepatitisTest_file_url || null },
+                vaccineCard: { status: data.vaccineCard_file_name ? 'Bekliyor' : 'Yüklenmedi', fileName: data.vaccineCard_file_name || null, fileUrl: data.vaccineCard_file_url || null }
             },
             createdAt: new Date().toISOString()
         };

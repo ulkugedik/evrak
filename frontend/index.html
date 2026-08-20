@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sağlık Bilimleri Uygulama ve Staj Portalı</title>
+    <title>Balıkesir Üniversitesi Sağlık Bilimleri Uygulama ve Staj Portalı</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,8 +16,7 @@
         <header class="main-header">
             <div class="header-brand">
                 <div>
-                    <h1>Sağlık Bilimleri Uygulama ve Staj Portalı</h1>
-                    <p>Uygulama ve Staj Belgeleri Takip Sistemi</p>
+                    <h1>Balıkesir Üniversitesi Sağlık Bilimleri Uygulama ve Staj Portalı</h1>
                 </div>
             </div>
             <div class="header-actions">
@@ -51,6 +50,9 @@
             </button>
             <button type="button" class="tab-btn" data-tab="tab-documents" role="tab">
                 3. Uygulama Belgeleri (7 Belge)
+            </button>
+            <button type="button" class="tab-btn" data-tab="tab-health" role="tab">
+                4. Sağlık & Aşı Takip
             </button>
         </nav>
 
@@ -415,6 +417,66 @@
 
                 <div class="tab-footer">
                     <button type="button" class="btn btn-secondary btn-prev" data-target="tab-application">
+                        &larr; Önceki Adım
+                    </button>
+                    <button type="button" class="btn btn-primary btn-next" data-target="tab-health">
+                        Sonraki Adım &rarr;
+                    </button>
+                </div>
+            </section>
+
+            <!-- TAB 4: SAĞLIK & AŞILAMA TAKİP -->
+            <section class="tab-pane" id="tab-health">
+                <div class="section-header">
+                    <h2>Sağlık & Aşılama Takip</h2>
+                    <p>Hepatit B tetkik bilgilerinizi ve varsa aşı kartınızı bu alandan sisteme yükleyiniz.</p>
+                </div>
+
+                <div class="form-grid">
+                    <!-- Tetkik Yapıldı mı -->
+                    <div class="form-group">
+                        <label for="hepatitisTested" class="required">Hepatit B Tetkiki Yapıldı mı?</label>
+                        <div class="input-wrapper">
+                            <select id="hepatitisTested" name="hepatitisTested" required>
+                                <option value="">-- Seçiniz --</option>
+                                <option value="Evet">Evet, Yapıldı</option>
+                                <option value="Hayır">Hayır, Yapılmadı</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Tetkik Tarihi -->
+                    <div class="form-group" id="group-hep-date" style="display: none;">
+                        <label for="hepatitisTestDate" class="required">Tetkik Tarihi</label>
+                        <div class="input-wrapper">
+                            <input type="date" id="hepatitisTestDate" name="hepatitisTestDate">
+                        </div>
+                    </div>
+
+                    <!-- Tetkik Belgesi -->
+                    <div class="form-group full-width" id="group-hep-file" style="display: none;">
+                        <label for="hepatitisTestFile" class="required">Hepatit B Tetkik Belgesi / Raporu Yükle</label>
+                        <div class="file-upload-box">
+                            <input type="file" id="hepatitisTestFile" name="hepatitisTestFile" accept=".pdf,.jpg,.jpeg">
+                            <span class="file-name-display">Tetkik Sonuç Belgesi Seçiniz (PDF/JPG)</span>
+                        </div>
+                    </div>
+
+                    <!-- Aşı Kartı Belgesi (Opsiyonel / Aşılama sonrası) -->
+                    <div class="form-group full-width" style="margin-top: 16px; border-top: 1px dashed var(--border); padding-top: 20px;">
+                        <label for="vaccineCardFile">Güncel Aşı Kartı / Belgesi Yükle (Aşılama Yapıldıysa)</label>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">
+                            Eğer yetkililer tarafından aşı listesine dahil edildiyseniz ve aşılarınız yapıldıysa, aşı kartınızı bu alandan yükleyebilirsiniz.
+                        </p>
+                        <div class="file-upload-box">
+                            <input type="file" id="vaccineCardFile" name="vaccineCardFile" accept=".pdf,.jpg,.jpeg">
+                            <span class="file-name-display">Güncel Aşı Kartı Dosyası Seçiniz (PDF/JPG)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-footer">
+                    <button type="button" class="btn btn-secondary btn-prev" data-target="tab-documents">
                         &larr; Önceki Adım
                     </button>
                     <button type="submit" class="btn btn-success btn-lg" id="btnSubmitForm">
