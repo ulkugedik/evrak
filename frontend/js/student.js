@@ -69,8 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         phoneInput.addEventListener('blur', (e) => {
             const val = e.target.value.trim();
-            // Tam format: 05XX XXX XX XX (15 karakter uzunluğu)
-            if (val.length > 0 && val.length < 15) {
+            // Tam format: 05XX XXX XX XX (14 karakter uzunluğu)
+            if (val.length > 0 && val.length < 14) {
                 e.target.style.borderColor = 'var(--danger)';
                 alert('Telefon numarası "05XX XXX XX XX" formatında ve 11 haneli olmalıdır.');
             } else {
@@ -111,6 +111,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.target.style.borderColor = '';
             }
         });
+    }
+
+    // 6. Sınıf Seçim Kısıtlaması: Bölüm sürelerine göre sınıf seçeneklerini kısıtla
+    const departmentSelect = document.getElementById('department');
+    const studentClassSelect = document.getElementById('studentClass');
+
+    if (departmentSelect && studentClassSelect) {
+        const updateClassOptions = () => {
+            const selectedDept = departmentSelect.value;
+            const classOptions = studentClassSelect.querySelectorAll('option');
+
+            const twoYearDepts = [
+                "İlk ve Acil Yardım",
+                "Dijital Sağlık Sistemleri Teknikerliği",
+                "Tıbbi Dokümantasyon ve Sekreterlik",
+                "Laborant ve Veteriner Sağlık"
+            ];
+            const sixYearDepts = [
+                "Tıp Fakültesi"
+            ];
+
+            classOptions.forEach(opt => {
+                const val = opt.value;
+                if (!val) return; // Boş seçeneği atla
+
+                let shouldDisable = false;
+
+                if (val === '5. Sınıf' || val === '6. Sınıf') {
+                    // Sadece 6 yıllık bölümlerde (Tıp) 5 ve 6 aktif
+                    if (!sixYearDepts.includes(selectedDept)) {
+                        shouldDisable = true;
+                    }
+                } else if (val === '3. Sınıf' || val === '4. Sınıf' || val === 'Yüksek Lisans') {
+                    // 2 yıllık bölümlerde 3, 4 ve Yüksek Lisans pasif olmalı
+                    if (twoYearDepts.includes(selectedDept)) {
+                        shouldDisable = true;
+                    }
+                }
+
+                if (shouldDisable) {
+                    opt.disabled = true;
+                    opt.style.display = 'none';
+                    if (studentClassSelect.value === val) {
+                        studentClassSelect.value = '';
+                    }
+                } else {
+                    opt.disabled = false;
+                    opt.style.display = 'block';
+                }
+            });
+        };
+
+        departmentSelect.addEventListener('change', updateClassOptions);
+        // Form taslağı yüklendikten sonra çalışması için ufak bir gecikmeyle de tetikliyoruz
+        setTimeout(updateClassOptions, 100);
     }
 
     // ----------------------------------------------------------------------
@@ -190,9 +245,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Telefon kontrolü (15 karakter: 05XX XXX XX XX)
+            // Telefon kontrolü (14 karakter: 05XX XXX XX XX)
             const phoneVal = phoneInput ? phoneInput.value.trim() : '';
-            if (phoneVal.length < 15) {
+            if (phoneVal.length < 14) {
                 isValid = false;
                 if (phoneInput) phoneInput.style.borderColor = 'var(--danger)';
                 alert('Telefon numarası eksik! "05XX XXX XX XX" formatında doldurunuz.');

@@ -28,6 +28,12 @@
                 <button type="button" class="btn btn-outline" id="btnDraftSave">
                     <i class="fa-solid fa-floppy-disk"></i> Taslağı Kaydet
                 </button>
+                <button type="button" class="btn btn-primary" id="btn-login-trigger">
+                    <i class="fa-solid fa-user-shield"></i> Yetkili Girişi
+                </button>
+                <button type="button" class="btn btn-danger hidden" id="btn-logout">
+                    <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+                </button>
             </div>
         </header>
 
@@ -104,9 +110,12 @@
                                 <option value="Fizyoterapi ve Rehabilitasyon">Fizyoterapi ve Rehabilitasyon</option>
                                 <option value="Beslenme ve Diyetetik">Beslenme ve Diyetetik</option>
                                 <option value="Tıp Fakültesi">Tıp Fakültesi</option>
-                                <option value="Diş Hekimliği">Diş Hekimliği</option>
+                                <option value="Gerontoloji">Gerontoloji</option>
                                 <option value="İlk ve Acil Yardım">İlk ve Acil Yardım</option>
-                                <option value="Sağlık Yönetimi">Sağlık Yönetimi</option>
+                                <option value="Dijital Sağlık Sistemleri Teknikerliği">Dijital Sağlık Sistemleri Teknikerliği</option>
+                                <option value="Tıbbi Dokümantasyon ve Sekreterlik">Tıbbi Dokümantasyon ve Sekreterlik</option>
+                                <option value="Laborant ve Veteriner Sağlık">Laborant ve Veteriner Sağlık</option>
+                                
                             </select>
                         </div>
                     </div>
@@ -121,6 +130,8 @@
                                 <option value="2. Sınıf">2. Sınıf</option>
                                 <option value="3. Sınıf">3. Sınıf</option>
                                 <option value="4. Sınıf">4. Sınıf</option>
+                                <option value="5. Sınıf">5. Sınıf</option>
+                                <option value="6. Sınıf">6. Sınıf</option>
                                 <option value="Yüksek Lisans">Yüksek Lisans</option>
                             </select>
                         </div>
@@ -457,6 +468,9 @@
             </section>
 
         </form>
+
+        <!-- Authorized Dashboards Container -->
+        <div id="dashboard-container" class="hidden"></div>
     </div>
 
     <!-- Submission Summary Modal -->
@@ -481,9 +495,46 @@
         </div>
     </div>
 
+    <!-- Authorized Login Modal -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal-card login-card" style="max-width: 420px;">
+            <div class="modal-header">
+                <div class="success-icon" style="background-color: var(--primary-light); color: var(--primary);">
+                    <i class="fa-solid fa-user-lock"></i>
+                </div>
+                <h2>Yetkili Girişi</h2>
+                <p>Akademik Danışman, Sağlık Görevlisi veya Sistem Yöneticisi girişi.</p>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="login-username" class="required">Kullanıcı Adı</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user input-icon"></i>
+                        <input type="text" id="login-username" placeholder="Kullanıcı adınızı girin" required>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="login-password" class="required">Şifre</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-key input-icon"></i>
+                        <input type="password" id="login-password" placeholder="Şifrenizi girin" required style="width: 100%; padding: 11px 14px 11px 40px; font-family: inherit; font-size: 0.925rem; border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; transition: all 0.2s ease;">
+                    </div>
+                </div>
+                <div class="alert-danger hidden" id="login-error-msg" style="color: var(--danger); font-size: 0.85rem; margin-bottom: 16px; display: none; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Hatalı kullanıcı adı veya şifre girdiniz!
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content: space-between;">
+                <button type="button" class="btn btn-secondary" id="btn-close-login">İptal</button>
+                <button type="button" class="btn btn-primary" id="btn-submit-login">Giriş Yap</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Script Imports -->
     <script src="js/db.js"></script>
     <script src="js/app.js"></script>
     <script src="js/student.js"></script>
+    <script src="js/advisor.js"></script>
 </body>
 </html>
