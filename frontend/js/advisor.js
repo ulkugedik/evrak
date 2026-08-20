@@ -1,22 +1,21 @@
 /**
  * ==========================================================================
- * Akademik Danışman Portalı Mantığı - advisor.js (Birleşik Tek Panel Sürümü)
- * Geliştirici 3 Sorumluluk Alanı (Danışman Paneli & Belge/Sağlık/Aşılama Onaylama)
+ * Admin & Danışman Paneli - advisor.js
+ * Yönetim Paneli, Toplu Onay/Red, Çöp Kutusu ve Dinamik Seçenek Yönetimi
  * ==========================================================================
  */
 
 (function() {
-    // Portali ilklendirme fonksiyonu
     window.initDanismanPortali = function(container) {
         if (!container) return;
 
-        let expandedCardId = null; // Genişletilmiş kartın ID'sini tutar
+        let activeAdminTab = 'applications'; // 'applications', 'trash', 'advisors', 'courses', 'instructors'
+        let expandedCardId = null;
         let searchQuery = '';
         let filterDepartment = '';
         let filterClass = '';
         let filterStatus = 'all';
 
-        // Evrak İsimleri Eşleşmesi
         const docNames = {
             isgCertificate: "16 Saatlik İSG Belgesi",
             medicalForm: "İşe Giriş Muayene Formu",
@@ -28,100 +27,82 @@
         };
 
         function getApplications() {
-            if (window.AppDB && window.AppDB.applications) {
-                return window.AppDB.applications;
+            if (window.AppDB && window.AppDB.getAllApplications) {
+                return window.AppDB.getAllApplications();
             }
             return JSON.parse(localStorage.getItem('db_applications') || '[]');
         }
 
-        function saveApplications(apps) {
-            if (window.AppDB) {
-                window.AppDB.applications = apps;
-            }
-            localStorage.setItem('db_applications', JSON.stringify(apps));
-        }
+        function renderDashboard() {
+            container.innerHTML = `
+                <div class="admin-panel-header" style="margin-bottom: 20px;">
+                    <div style="margin-bottom: 16px;">
+                        <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">
+                            Yönetim Paneli
+                        </h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">
+                            Öğrenci staj başvuruları, toplu onay/red, çöp kutusu ve sistem seçeneklerini yönetin.
+                        </p>
+                    </div>
 
-        function calculateStats() {
-            const apps = getApplications();
-            let total = apps.length;
-            let fullyApproved = 0;
-            let pendingDocsCount = 0;
+                    <!-- Admin Ana Sekmeleri -->
+                    <div class="admin-tabs" style="display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 2px solid var(--border); padding-bottom: 10px;">
+                        <button type="button" class="btn ${activeAdminTab === 'applications' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="applications">
+                            Aktif Başvurular
+                        </button>
+                        <button type="button" class="btn ${activeAdminTab === 'trash' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="trash">
+                            Çöp Kutusu (Reddedilenler)
+                        </button>
+                        <button type="button" class="btn ${activeAdminTab === 'advisors' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="advisors">
+                            Danışman Yönetimi
+                        </button>
+                        <button type="button" class="btn ${activeAdminTab === 'courses' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="courses">
+                            Ders Yönetimi
+                        </button>
+                        <button type="button" class="btn ${activeAdminTab === 'instructors' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="instructors">
+                            Öğretim Elemanı Yönetimi
+                        </button>
+                    </div>
+                </div>
 
-            apps.forEach(app => {
-                let allApproved = true;
-                const statuses = app.documentsStatus || {};
-                
-                Object.keys(statuses).forEach(key => {
-                    const status = statuses[key].status;
-                    if (status === 'Bekliyor') {
-                        pendingDocsCount++;
-                    }
-                    if (status !== 'Onaylandı') {
-                        allApproved = false;
-                    }
+                <div id="admin-tab-content"></div>
+            `;
+
+            // Sekme değiştirme dinleyicileri
+            container.querySelectorAll('.admin-nav-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeAdminTab = btn.getAttribute('data-tab');
+                    renderDashboard();
                 });
-
-                if (allApproved && Object.keys(statuses).length > 0) {
-                    fullyApproved++;
-                }
             });
 
-            return { total, fullyApproved, pendingDocs: pendingDocsCount };
+            const contentDiv = document.getElementById('admin-tab-content');
+
+            if (activeAdminTab === 'applications') {
+                renderActiveApplicationsTab(contentDiv);
+            } else if (activeAdminTab === 'trash') {
+                renderTrashTab(contentDiv);
+            } else if (activeAdminTab === 'advisors') {
+                renderAdvisorsTab(contentDiv);
+            } else if (activeAdminTab === 'courses') {
+                renderCoursesTab(contentDiv);
+            } else if (activeAdminTab === 'instructors') {
+                renderInstructorsTab(contentDiv);
+            }
         }
 
-        function renderDashboard() {
-            const stats = calculateStats();
-            
-            container.innerHTML = `
-                <div class="dashboard-header-inner" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
-                    <div>
-                        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 4px; color: var(--text-main);">
-                            <i class="fa-solid fa-graduation-cap" style="color: var(--primary); margin-right: 8px;"></i>
-                            Yetkili Evrak Değerlendirme & Sağlık Takip Paneli
-                        </h3>
-                        <p style="font-size: 0.85rem; color: var(--text-muted);">Tüm öğrenci staj belgelerini, sağlık evraklarını ve aşı takibini tek bir yerden yönetin.</p>
-                    </div>
-                    <button type="button" class="btn btn-danger btn-sm" id="btn-reset-db" style="background-color: var(--danger); color: #ffffff; padding: 8px 14px; font-size: 0.8rem; font-weight: 600; border-radius: var(--radius-sm); border: none; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                        <i class="fa-solid fa-trash-can"></i> Tüm Kayıtları Sıfırla
-                    </button>
-                </div>
+        // ------------------------------------------------------------------
+        // SEKME 1: AKTİF BAŞVURULAR (Toplu Onay & Toplu Red)
+        // ------------------------------------------------------------------
+        function renderActiveApplicationsTab(target) {
+            const allApps = getApplications();
+            const activeApps = allApps.filter(a => !a.isTrash);
 
-                <!-- İstatistik Kartları -->
-                <div class="dashboard-stats">
-                    <div class="stat-card">
-                        <div class="stat-info">
-                            <div class="stat-val">${stats.total}</div>
-                            <div class="stat-label">Toplam Başvuru</div>
-                        </div>
-                        <div class="stat-icon primary">
-                            <i class="fa-solid fa-users"></i>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-info">
-                            <div class="stat-val">${stats.fullyApproved}</div>
-                            <div class="stat-label">Tüm Belgeleri Onaylanan</div>
-                        </div>
-                        <div class="stat-icon success">
-                            <i class="fa-solid fa-circle-check"></i>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-info">
-                            <div class="stat-val">${stats.pendingDocs}</div>
-                            <div class="stat-label">Onay Bekleyen Toplam Evrak</div>
-                        </div>
-                        <div class="stat-icon warning">
-                            <i class="fa-solid fa-clock"></i>
-                        </div>
-                    </div>
-                </div>
-
+            target.innerHTML = `
                 <!-- Filtreleme Alanı -->
-                <div class="filters-card">
+                <div class="filters-card" style="margin-bottom: 20px;">
                     <div class="filters-grid">
                         <div class="search-input-wrapper">
-                            <i class="fa-solid fa-magnifying-glass"></i>
                             <input type="text" id="adv-search" placeholder="Öğrenci Adı veya No Ara..." value="${searchQuery}">
                         </div>
                         <div>
@@ -148,67 +129,44 @@
                                 <option value="all" ${filterStatus === 'all' ? 'selected' : ''}>-- Tüm Durumlar --</option>
                                 <option value="pending" ${filterStatus === 'pending' ? 'selected' : ''}>Bekleyen Evrak Var</option>
                                 <option value="approved" ${filterStatus === 'approved' ? 'selected' : ''}>Tümü Onaylandı</option>
-                                <option value="rejected" ${filterStatus === 'rejected' ? 'selected' : ''}>Reddedilen Var</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
-                <!-- Liste -->
                 <div class="list-container" id="adv-student-list"></div>
             `;
 
-            // Event listener'ları bağla
-            document.getElementById('adv-search').addEventListener('input', function(e) {
+            document.getElementById('adv-search').addEventListener('input', e => {
                 searchQuery = e.target.value;
-                renderStudentList();
+                renderStudentCardsList(activeApps);
             });
-
-            document.getElementById('adv-filter-dept').addEventListener('change', function(e) {
+            document.getElementById('adv-filter-dept').addEventListener('change', e => {
                 filterDepartment = e.target.value;
-                renderStudentList();
+                renderStudentCardsList(activeApps);
             });
-
-            document.getElementById('adv-filter-class').addEventListener('change', function(e) {
+            document.getElementById('adv-filter-class').addEventListener('change', e => {
                 filterClass = e.target.value;
-                renderStudentList();
+                renderStudentCardsList(activeApps);
             });
-
-            document.getElementById('adv-filter-status').addEventListener('change', function(e) {
+            document.getElementById('adv-filter-status').addEventListener('change', e => {
                 filterStatus = e.target.value;
-                renderStudentList();
+                renderStudentCardsList(activeApps);
             });
 
-            const resetBtn = document.getElementById('btn-reset-db');
-            if (resetBtn) {
-                resetBtn.addEventListener('click', function() {
-                    if (confirm("Sistemdeki tüm kayıtlı staj başvurularını ve aşı verilerini sıfırlamak (silmek) istediğinize emin misiniz? Bu işlem geri alınamaz.")) {
-                        localStorage.removeItem('db_applications');
-                        if (window.AppDB) {
-                            window.AppDB.applications = [];
-                        }
-                        renderDashboard();
-                    }
-                });
-            }
-
-            renderStudentList();
+            renderStudentCardsList(activeApps);
         }
 
-        function renderStudentList() {
+        function renderStudentCardsList(activeApps) {
             const listContainer = document.getElementById('adv-student-list');
             if (!listContainer) return;
 
-            const apps = getApplications();
-            
-            // Filtreleme mantığı
-            const filteredApps = apps.filter(app => {
+            const filteredApps = activeApps.filter(app => {
                 const nameMatch = app.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                                   app.studentNo.includes(searchQuery);
                 const deptMatch = !filterDepartment || app.department === filterDepartment;
                 const classMatch = !filterClass || app.studentClass === filterClass;
-                
-                // Durum filtresi
+
                 let statusMatch = true;
                 if (filterStatus !== 'all') {
                     const statuses = Object.values(app.documentsStatus || {}).map(d => d.status);
@@ -216,31 +174,16 @@
                         statusMatch = statuses.includes('Bekliyor');
                     } else if (filterStatus === 'approved') {
                         statusMatch = statuses.length > 0 && statuses.every(s => s === 'Onaylandı');
-                    } else if (filterStatus === 'rejected') {
-                        statusMatch = statuses.includes('Reddedildi');
                     }
                 }
-
                 return nameMatch && deptMatch && classMatch && statusMatch;
             });
 
-            if (apps.length === 0) {
-                listContainer.innerHTML = `
-                    <div class="no-records" style="padding: 60px 20px;">
-                        <i class="fa-solid fa-users-slash" style="color: #cbd5e1; font-size: 3.5rem; margin-bottom: 16px; display: block;"></i>
-                        <h4 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Henüz Başvuru Yapılmadı</h4>
-                        <p style="font-size: 0.875rem; color: var(--text-muted); max-width: 400px; margin: 0 auto;">Sisteme kayıtlı staj başvurusu bulunmamaktadır. Öğrenciler form doldurup gönderdikçe kayıtlar burada listelenecektir.</p>
-                    </div>
-                `;
-                return;
-            }
-
             if (filteredApps.length === 0) {
                 listContainer.innerHTML = `
-                    <div class="no-records" style="padding: 60px 20px;">
-                        <i class="fa-solid fa-magnifying-glass" style="color: #cbd5e1; font-size: 3.5rem; margin-bottom: 16px; display: block;"></i>
-                        <h4 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Sonuç Bulunamadı</h4>
-                        <p style="font-size: 0.875rem; color: var(--text-muted); max-width: 400px; margin: 0 auto;">Arama veya filtreleme kriterlerinize uygun öğrenici kaydı bulunamadı.</p>
+                    <div class="no-records" style="padding: 40px; text-align: center; color: var(--text-muted);">
+                        <h4>Başvuru Bulunamadı</h4>
+                        <p>Kriterlere uygun aktif başvuru bulunmamaktadır.</p>
                     </div>
                 `;
                 return;
@@ -249,41 +192,27 @@
             listContainer.innerHTML = '';
 
             filteredApps.forEach(app => {
-                // Öğrencinin onay ilerlemesini hesapla (X/7)
                 const statuses = app.documentsStatus || {};
                 const keys = Object.keys(statuses);
                 const totalDocs = keys.length;
                 const approvedCount = keys.filter(k => statuses[k].status === 'Onaylandı').length;
                 const pendingCount = keys.filter(k => statuses[k].status === 'Bekliyor').length;
-                const rejectedCount = keys.filter(k => statuses[k].status === 'Reddedildi').length;
 
                 let progressBadgeClass = 'badge-pending';
                 let progressBadgeText = `${approvedCount}/${totalDocs} Onaylandı`;
                 if (approvedCount === totalDocs && totalDocs > 0) {
                     progressBadgeClass = 'badge-approved';
                     progressBadgeText = 'Tümü Onaylandı';
-                } else if (rejectedCount > 0) {
-                    progressBadgeClass = 'badge-rejected';
-                    progressBadgeText = `${rejectedCount} Reddedildi`;
-                } else if (pendingCount > 0) {
-                    progressBadgeClass = 'badge-pending';
-                    progressBadgeText = `${pendingCount} Bekliyor`;
                 }
 
-                // Aşı Dozları Bilgisi (Kaydedilmiş veri varsa yükle, yoksa varsayılan başlat)
-                const vaxData = app.vaccinationData || getInitVaxData();
-
-                const initials = app.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
                 const isActive = app.id === expandedCardId ? 'active' : '';
-
                 const card = document.createElement('div');
                 card.className = `student-list-card ${isActive}`;
                 card.setAttribute('data-id', app.id);
-                
+
                 card.innerHTML = `
                     <div class="student-card-header">
                         <div class="student-meta">
-                            <div class="student-avatar">${initials}</div>
                             <div class="student-title">
                                 <h4>${app.fullName}</h4>
                                 <p>${app.studentNo} • ${app.department} • ${app.studentClass}</p>
@@ -291,11 +220,10 @@
                         </div>
                         <div class="student-summary-status">
                             <span class="badge ${progressBadgeClass}">${progressBadgeText}</span>
-                            <i class="fa-solid fa-chevron-down card-toggle-icon"></i>
                         </div>
                     </div>
-                    <div class="student-card-body">
-                        <!-- Öğrenci Detay Grid -->
+
+                    <div class="student-card-body" style="display: ${isActive ? 'block' : 'none'};">
                         <div class="student-details-grid">
                             <div class="detail-item">
                                 <span class="detail-label">Staj Kurumu / Birimi</span>
@@ -323,137 +251,78 @@
                             </div>
                         </div>
 
+                        <!-- Toplu İşlem Butonları (7. Madde Gereği) -->
+                        <div class="bulk-action-card" style="background: #f8fafc; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                            <div>
+                                <strong>Gerekli Evrak İşlemleri:</strong>
+                                <span style="font-size: 0.85rem; color: var(--text-muted); display: block;">Evrakları toplu olarak onaylayabilir veya toplu reddederek çöp kutusuna gönderebilirsiniz.</span>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button type="button" class="btn btn-success btn-bulk-approve" data-student-id="${app.id}">
+                                    Tüm Belgeleri Onayla
+                                </button>
+                                <button type="button" class="btn btn-danger btn-bulk-reject" data-student-id="${app.id}">
+                                    Tüm Belgeleri Reddet (Çöpe At)
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Evraklar Listesi -->
-                        <div class="docs-review-section" style="margin-bottom: 24px;">
-                            <h5><i class="fa-solid fa-file-shield"></i> Yüklenen Belgelerin İnceleme ve Onay Durumu</h5>
+                        <div class="docs-review-section">
+                            <h5>Yüklenen Belgelerin Detaylı İnceleme Durumu</h5>
                             <table class="docs-table">
                                 <thead>
                                     <tr>
                                         <th>Belge Adı</th>
                                         <th>Belge Detayı / Tarih</th>
-                                        <th>Dosya</th>
-                                        <th>Onay Durumu</th>
-                                        <th>İşlemler</th>
+                                        <th>Dosya / Link</th>
+                                        <th>Durum</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${Object.keys(docNames).map(key => {
                                         const doc = statuses[key] || { status: 'Yüklenmedi' };
-                                        
-                                        // Detay bilgileri oluştur
                                         let detail = '—';
-                                        if (key === 'isgCertificate' && doc.date) {
-                                            detail = `Belge Tarihi: ${formatDate(doc.date)}`;
-                                        } else if (key === 'medicalForm' && doc.date) {
-                                            detail = `Muayene: ${formatDate(doc.date)}<br><small style="color: var(--text-muted)">Bitiş: ${formatDate(doc.expiryDate)}</small>`;
-                                        } else if (key === 'privacyAgreement' && doc.physicalCount) {
-                                            detail = `Fiziksel Teslim: ${doc.physicalCount} Adet`;
-                                        } else if ((key === 'hemogram' || key === 'elisa' || key === 'chestXray') && doc.date) {
-                                            detail = `Tetkik Tarihi: ${formatDate(doc.date)}`;
-                                        }
+                                        if (key === 'isgCertificate' && doc.date) detail = `Tarih: ${formatDate(doc.date)}`;
+                                        else if (key === 'medicalForm' && doc.date) detail = `Muayene: ${formatDate(doc.date)}`;
+                                        else if (key === 'privacyAgreement' && doc.physicalCount) detail = `Fiziksel: ${doc.physicalCount} Adet`;
+                                        else if (doc.date) detail = `Tarih: ${formatDate(doc.date)}`;
 
                                         let statusBadgeClass = 'badge-pending';
                                         if (doc.status === 'Onaylandı') statusBadgeClass = 'badge-approved';
                                         else if (doc.status === 'Reddedildi') statusBadgeClass = 'badge-rejected';
                                         else if (doc.status === 'Yüklenmedi') statusBadgeClass = 'optional-badge';
 
-                                        const fileAction = doc.status !== 'Yüklenmedi' 
-                                            ? `<a href="#" class="doc-link btn-view-file-mock" data-file="${key}" data-student="${app.fullName}"><i class="fa-solid fa-file-pdf"></i> İncele</a>`
-                                            : `<span style="color: var(--text-muted); font-style: italic;">Dosya Yok</span>`;
-
-                                        const actionButtons = doc.status !== 'Yüklenmedi' 
-                                            ? `
-                                                <div class="btn-group">
-                                                    <button class="btn-action btn-approve" data-student-id="${app.id}" data-doc-key="${key}" title="Belgeyi Onayla">
-                                                        <i class="fa-solid fa-check"></i> Onayla
-                                                    </button>
-                                                    <button class="btn-action btn-reject" data-student-id="${app.id}" data-doc-key="${key}" title="Belgeyi Reddet">
-                                                        <i class="fa-solid fa-xmark"></i> Reddet
-                                                    </button>
-                                                </div>
-                                              `
-                                            : `—`;
+                                        let fileAction = '—';
+                                        if (doc.fileUrl || doc.fileName) {
+                                            fileAction = `<a href="${doc.fileUrl || '#'}" target="_blank" download="${doc.fileName || 'belge'}" class="doc-link">${doc.fileName || 'Dosyayı İncele/İndir'}</a>`;
+                                        } else if (doc.status !== 'Yüklenmedi') {
+                                            fileAction = `<span style="color: var(--text-muted); font-style: italic;">Dosya Bağlantısı Yok</span>`;
+                                        }
 
                                         return `
                                             <tr>
-                                                <td style="font-weight: 600; color: var(--text-main);">${docNames[key]}</td>
+                                                <td style="font-weight: 600;">${docNames[key]}</td>
                                                 <td>${detail}</td>
                                                 <td>${fileAction}</td>
                                                 <td><span class="badge ${statusBadgeClass}">${doc.status}</span></td>
-                                                <td>${actionButtons}</td>
                                             </tr>
                                         `;
                                     }).join('')}
                                 </tbody>
                             </table>
                         </div>
-
-                        <!-- Hepatit ve Aşı Takip Bölümü (YENİ BİRLEŞİK EK) -->
-                        <div class="vax-section" style="border-top: 1px solid var(--border); padding-top: 20px;">
-                            <h5 style="color: var(--primary); margin-bottom: 16px;">
-                                <i class="fa-solid fa-syringe" style="margin-right: 8px;"></i>
-                                Hepatit B Aşılama ve Bağışıklık Durum Takibi
-                            </h5>
-                            
-                            <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 16px;">
-                                <div class="form-group">
-                                    <label>Hepatit B Bağışıklık Durumu</label>
-                                    <select class="select-vax-status" data-student-id="${app.id}">
-                                        <option value="Belirsiz" ${vaxData.hepatitisStatus === 'Belirsiz' ? 'selected' : ''}>Belirsiz (Test Sonucu Bekleniyor)</option>
-                                        <option value="Bağışık" ${vaxData.hepatitisStatus === 'Bağışık' ? 'selected' : ''}>Bağışık (Aşı Gerekli Değil)</option>
-                                        <option value="Aşı Gerekli" ${vaxData.hepatitisStatus === 'Aşı Gerekli' ? 'selected' : ''}>Bağışık Değil (Aşı Gerekli)</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Aşı Listesine Dahil mi?</label>
-                                    <select class="select-vax-included" data-student-id="${app.id}">
-                                        <option value="Hayır" ${vaxData.vaccineIncluded === 'Hayır' ? 'selected' : ''}>Hayır</option>
-                                        <option value="Evet" ${vaxData.vaccineIncluded === 'Evet' ? 'selected' : ''}>Evet (Aşı Takip Listesinde)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="vax-dose-table">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                    <div class="vax-dose-title">Aşı Dozları Takip Tablosu</div>
-                                    <button class="btn btn-outline btn-sm btn-add-dose" data-student-id="${app.id}">
-                                        <i class="fa-solid fa-plus"></i> Doz Ekle
-                                    </button>
-                                </div>
-                                <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
-                                    ${vaxData.doses.map((dose, idx) => `
-                                        <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
-                                            <div style="display: flex; align-items: center; gap: 10px;">
-                                                <input type="checkbox" class="chk-dose-completed" data-student-id="${app.id}" data-idx="${idx}" ${dose.completed ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;">
-                                                <span style="font-weight: 700; font-size: 0.9rem; color: var(--text-main);">${dose.name}</span>
-                                            </div>
-                                            <div style="display: flex; align-items: center; gap: 12px;">
-                                                <input type="date" class="input-dose-date" data-student-id="${app.id}" data-idx="${idx}" value="${dose.date || ''}" style="width: 140px; padding: 4px 8px; font-size: 0.8rem;">
-                                                <button class="btn-remove-dose btn-delete-dose" data-student-id="${app.id}" data-idx="${idx}" style="color: var(--danger); font-size: 0.9rem; border: none; background: transparent; cursor: pointer;">
-                                                    <i class="fa-solid fa-trash-can"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
                 `;
 
-                // Toggling body on header click
                 card.querySelector('.student-card-header').addEventListener('click', () => {
-                    const isExpanded = card.classList.contains('active');
-                    
-                    // Collapse previously active card
+                    const isExp = card.classList.contains('active');
                     const activeCard = listContainer.querySelector('.student-list-card.active');
                     if (activeCard) {
                         activeCard.classList.remove('active');
                         activeCard.querySelector('.student-card-body').style.display = 'none';
                     }
-
-                    if (!isExpanded) {
+                    if (!isExp) {
                         card.classList.add('active');
                         card.querySelector('.student-card-body').style.display = 'block';
                         expandedCardId = app.id;
@@ -465,131 +334,29 @@
                 listContainer.appendChild(card);
             });
 
-            // Dosya görüntüleme mock olayı
-            listContainer.querySelectorAll('.btn-view-file-mock').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
+            // Toplu Onay Buton Dinleyicisi
+            listContainer.querySelectorAll('.btn-bulk-approve').forEach(btn => {
+                btn.addEventListener('click', e => {
                     e.stopPropagation();
-                    const student = btn.getAttribute('data-student');
-                    const file = docNames[btn.getAttribute('data-file')];
-                    alert(`[Mock Görüntüleyici]\n\nÖğrenci: ${student}\nBelge: ${file}\n\nDosya doğrulandı, okuma yetkisi başarılı.`);
+                    const studentId = btn.getAttribute('data-student-id');
+                    if (window.AppDB && window.AppDB.bulkApproveApplication) {
+                        window.AppDB.bulkApproveApplication(studentId);
+                        alert('Başvuru ve tüm evrakları onaylandı!');
+                        renderDashboard();
+                    }
                 });
             });
 
-            // Belge onaylama olayı
-            listContainer.querySelectorAll('.btn-approve').forEach(btn => {
-                btn.addEventListener('click', function(e) {
+            // Toplu Red Buton Dinleyicisi (Çöpe Atma)
+            listContainer.querySelectorAll('.btn-bulk-reject').forEach(btn => {
+                btn.addEventListener('click', e => {
                     e.stopPropagation();
                     const studentId = btn.getAttribute('data-student-id');
-                    const docKey = btn.getAttribute('data-doc-key');
-                    updateDocStatus(studentId, docKey, 'Onaylandı');
-                });
-            });
-
-            // Belge reddetme olayı
-            listContainer.querySelectorAll('.btn-reject').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const studentId = btn.getAttribute('data-student-id');
-                    const docKey = btn.getAttribute('data-doc-key');
-                    
-                    const reason = prompt("Reddetme gerekçesini giriniz:", "Belge üzerindeki bilgiler okunamıyor.");
+                    const reason = prompt("Reddetme ve çöp kutusuna gönderme gerekçesini giriniz:", "Evraklar eksik veya okunamıyor.");
                     if (reason !== null) {
-                        updateDocStatus(studentId, docKey, 'Reddedildi', reason);
-                    }
-                });
-            });
-
-            // Aşı Durumu Seçimi
-            listContainer.querySelectorAll('.select-vax-status').forEach(select => {
-                select.addEventListener('change', function() {
-                    const studentId = select.getAttribute('data-student-id');
-                    const val = select.value;
-                    let autoIncluded = null;
-                    if (val === 'Aşı Gerekli') {
-                        autoIncluded = 'Evet';
-                    }
-                    updateVaccinationData(studentId, {
-                        hepatitisStatus: val,
-                        ...(autoIncluded ? { vaccineIncluded: autoIncluded } : {})
-                    });
-                });
-            });
-
-            listContainer.querySelectorAll('.select-vax-included').forEach(select => {
-                select.addEventListener('change', function() {
-                    const studentId = select.getAttribute('data-student-id');
-                    updateVaccinationData(studentId, { vaccineIncluded: select.value });
-                });
-            });
-
-            // Aşı Checkbox Durumu
-            listContainer.querySelectorAll('.chk-dose-completed').forEach(chk => {
-                chk.addEventListener('change', function() {
-                    const studentId = chk.getAttribute('data-student-id');
-                    const idx = parseInt(chk.getAttribute('data-idx'));
-                    const apps = getApplications();
-                    const app = apps.find(a => a.id === studentId);
-                    if (app) {
-                        if (!app.vaccinationData) app.vaccinationData = getInitVaxData();
-                        app.vaccinationData.doses[idx].completed = chk.checked;
-                        saveApplications(apps);
-                    }
-                });
-            });
-
-            // Aşı Tarihi
-            listContainer.querySelectorAll('.input-dose-date').forEach(input => {
-                input.addEventListener('change', function() {
-                    const studentId = input.getAttribute('data-student-id');
-                    const idx = parseInt(input.getAttribute('data-idx'));
-                    const apps = getApplications();
-                    const app = apps.find(a => a.id === studentId);
-                    if (app) {
-                        if (!app.vaccinationData) app.vaccinationData = getInitVaxData();
-                        app.vaccinationData.doses[idx].date = input.value;
-                        saveApplications(apps);
-                    }
-                });
-            });
-
-            // Aşı / Doz Ekleme
-            listContainer.querySelectorAll('.btn-add-dose').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const studentId = btn.getAttribute('data-student-id');
-                    const name = prompt("Aşı veya doz adını girin (Örn: 4. Doz veya Tetanoz 1. Doz):", "Ek Doz");
-                    if (name) {
-                        const apps = getApplications();
-                        const app = apps.find(a => a.id === studentId);
-                        if (app) {
-                            if (!app.vaccinationData) app.vaccinationData = getInitVaxData();
-                            app.vaccinationData.doses.push({
-                                name: name,
-                                date: '',
-                                completed: false
-                            });
-                            saveApplications(apps);
-                            // Yenile
-                            renderDashboard();
-                        }
-                    }
-                });
-            });
-
-            // Aşı / Doz Silme
-            listContainer.querySelectorAll('.btn-delete-dose').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const studentId = btn.getAttribute('data-student-id');
-                    const idx = parseInt(btn.getAttribute('data-idx'));
-                    if (confirm("Bu aşı dozunu silmek istediğinize emin misiniz?")) {
-                        const apps = getApplications();
-                        const app = apps.find(a => a.id === studentId);
-                        if (app && app.vaccinationData) {
-                            app.vaccinationData.doses.splice(idx, 1);
-                            saveApplications(apps);
-                            // Yenile
+                        if (window.AppDB && window.AppDB.bulkRejectApplication) {
+                            window.AppDB.bulkRejectApplication(studentId, reason);
+                            alert('Başvuru reddedildi ve Çöp Kutusuna taşındı.');
                             renderDashboard();
                         }
                     }
@@ -597,67 +364,308 @@
             });
         }
 
-        function getInitVaxData() {
-            return {
-                hepatitisStatus: 'Belirsiz',
-                vaccineIncluded: 'Hayır',
-                doses: [
-                    { name: '1. Doz', date: '', completed: false },
-                    { name: '2. Doz', date: '', completed: false },
-                    { name: '3. Doz', date: '', completed: false }
-                ]
-            };
+        // ------------------------------------------------------------------
+        // SEKME 2: ÇÖP KUTUSU (REDDEDİLENLER)
+        // ------------------------------------------------------------------
+        function renderTrashTab(target) {
+            const allApps = getApplications();
+            const trashApps = allApps.filter(a => a.isTrash);
+
+            if (trashApps.length === 0) {
+                target.innerHTML = `
+                    <div class="no-records" style="padding: 50px; text-align: center;">
+                        <h4>Çöp Kutusu Boş</h4>
+                        <p style="color: var(--text-muted);">Reddedilen veya çöp kutusuna gönderilen başvuru bulunmamaktadır.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let trashListHtml = `
+                <div style="margin-bottom: 16px;">
+                    <h4 style="font-size: 1.1rem; color: var(--danger);">Reddedilen Başvurular ve Çöp Kutusu</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Reddedilen başvurular burada saklanır. İstediğiniz zaman geri yükleyebilir veya kalıcı olarak silebilirsiniz.</p>
+                </div>
+                <div class="trash-list" style="display: flex; flex-direction: column; gap: 12px;">
+            `;
+
+            trashApps.forEach(app => {
+                trashListHtml += `
+                    <div style="background: #ffffff; border: 1px solid var(--danger); border-radius: var(--radius-md); padding: 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+                        <div>
+                            <h4 style="font-size: 1rem; color: var(--text-main); margin-bottom: 4px;">${app.fullName} (${app.studentNo})</h4>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">
+                                ${app.department} • ${app.courseNameCode} • ${app.institution}
+                            </p>
+                            <div style="font-size: 0.8rem; color: var(--danger); font-weight: 600;">
+                                Red Neden: ${app.rejectionReason || 'Belirtilmedi'}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn btn-outline btn-restore" data-student-id="${app.id}">
+                                Geri Yükle
+                            </button>
+                            <button type="button" class="btn btn-danger btn-delete-perm" data-student-id="${app.id}">
+                                Kalıcı Sil
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            trashListHtml += `</div>`;
+            target.innerHTML = trashListHtml;
+
+            // Geri Yükle Dinleyicisi
+            target.querySelectorAll('.btn-restore').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-student-id');
+                    if (window.AppDB && window.AppDB.restoreApplication) {
+                        window.AppDB.restoreApplication(id);
+                        alert('Başvuru Çöp Kutusundan çıkarıldı ve aktif listeye taşındı.');
+                        renderDashboard();
+                    }
+                });
+            });
+
+            // Kalıcı Sil Dinleyicisi
+            target.querySelectorAll('.btn-delete-perm').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-student-id');
+                    if (confirm("Bu başvuruyu KALICI OLARAK silmek istediğinize emin misiniz? Bu işlem geri alınamaz.")) {
+                        if (window.AppDB && window.AppDB.deletePermanently) {
+                            window.AppDB.deletePermanently(id);
+                            renderDashboard();
+                        }
+                    }
+                });
+            });
         }
 
-        function updateVaccinationData(studentId, data) {
-            const apps = getApplications();
-            const idx = apps.findIndex(a => a.id === studentId);
-            if (idx !== -1) {
-                if (!apps[idx].vaccinationData) apps[idx].vaccinationData = getInitVaxData();
-                apps[idx].vaccinationData = { ...apps[idx].vaccinationData, ...data };
-                saveApplications(apps);
-                renderDashboard();
+        // ------------------------------------------------------------------
+        // SEKME 3: DANIŞMAN YÖNETİMİ (Ekle / Sil)
+        // ------------------------------------------------------------------
+        function renderAdvisorsTab(target) {
+            const advisors = window.AppDB ? window.AppDB.getAdvisors() : [];
+
+            let html = `
+                <div style="max-width: 600px;">
+                    <h4 style="font-size: 1.1rem; margin-bottom: 12px;">Akademik Danışman Yönetimi</h4>
+                    
+                    <form id="form-add-advisor" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <input type="text" id="input-new-advisor" placeholder="Yeni Danışman Ünvan ve Adı" required style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                        <button type="submit" class="btn btn-primary">Danışman Ekle</button>
+                    </form>
+
+                    <div class="advisors-list" style="display: flex; flex-direction: column; gap: 8px;">
+            `;
+
+            advisors.forEach(adv => {
+                html += `
+                    <div style="background: #ffffff; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 600; color: var(--text-main);">${adv}</span>
+                        <button type="button" class="btn btn-danger btn-sm btn-del-advisor" data-name="${adv}">Sil</button>
+                    </div>
+                `;
+            });
+
+            html += `</div></div>`;
+            target.innerHTML = html;
+
+            const form = document.getElementById('form-add-advisor');
+            if (form) {
+                form.addEventListener('submit', e => {
+                    e.preventDefault();
+                    const input = document.getElementById('input-new-advisor');
+                    const val = input.value.trim();
+                    if (val && window.AppDB.addAdvisor(val)) {
+                        alert('Yeni danışman eklendi.');
+                        renderDashboard();
+                    } else {
+                        alert('Bu danışman zaten mevcut veya geçersiz.');
+                    }
+                });
             }
+
+            target.querySelectorAll('.btn-del-advisor').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const name = btn.getAttribute('data-name');
+                    if (confirm(`"${name}" isimli danışmanı silmek istediğinize emin misiniz?`)) {
+                        window.AppDB.deleteAdvisor(name);
+                        renderDashboard();
+                    }
+                });
+            });
         }
 
-        function updateDocStatus(studentId, docKey, status, reason = '') {
-            const apps = getApplications();
-            const appIndex = apps.findIndex(a => a.id === studentId);
-            
-            if (appIndex !== -1) {
-                if (!apps[appIndex].documentsStatus) apps[appIndex].documentsStatus = {};
-                if (!apps[appIndex].documentsStatus[docKey]) apps[appIndex].documentsStatus[docKey] = {};
-                
-                apps[appIndex].documentsStatus[docKey].status = status;
-                if (reason) {
-                    apps[appIndex].documentsStatus[docKey].rejectionReason = reason;
-                } else {
-                    delete apps[appIndex].documentsStatus[docKey].rejectionReason;
-                }
+        // ------------------------------------------------------------------
+        // SEKME 4: DERS YÖNETİMİ (Bölüm ve Döneme Göre Ekle / Sil)
+        // ------------------------------------------------------------------
+        function renderCoursesTab(target) {
+            const courses = window.AppDB ? window.AppDB.getAllCourses() : [];
 
-                saveApplications(apps);
-                
-                // Dashboard ve listeyi güncelle
-                const stats = calculateStats();
-                // Kartı açık tutarak listeyi yeniden çiz
-                renderDashboard();
+            let html = `
+                <div style="max-width: 750px;">
+                    <h4 style="font-size: 1.1rem; margin-bottom: 8px;">Bölüm ve Döneme Göre Ders Yönetimi</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+                        Öğrencilerin seçebileceği dersleri belirli Bölüm ve Dönem eşleşmesiyle tanımlayabilirsiniz.
+                    </p>
+                    
+                    <form id="form-add-course" style="background: #ffffff; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 24px;">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px;">
+                            <div>
+                                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">Bölüm</label>
+                                <select id="course-dept-input" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                                    <option value="">-- Bölüm Seçin --</option>
+                                    <option value="Hemşirelik">Hemşirelik</option>
+                                    <option value="Ebelik">Ebelik</option>
+                                    <option value="Fizyoterapi ve Rehabilitasyon">Fizyoterapi ve Rehabilitasyon</option>
+                                    <option value="Beslenme ve Diyetetik">Beslenme ve Diyetetik</option>
+                                    <option value="Tıp Fakültesi">Tıp Fakültesi</option>
+                                    <option value="Gerontoloji">Gerontoloji</option>
+                                    <option value="İlk ve Acil Yardım">İlk ve Acil Yardım</option>
+                                    <option value="Dijital Sağlık Sistemleri Teknikerliği">Dijital Sağlık Sistemleri Teknikerliği</option>
+                                    <option value="Tıbbi Dokümantasyon ve Sekreterlik">Tıbbi Dokümantasyon ve Sekreterlik</option>
+                                    <option value="Laborant ve Veteriner Sağlık">Laborant ve Veteriner Sağlık</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">Dönem</label>
+                                <select id="course-term-input" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                                    <option value="">-- Dönem Seçin --</option>
+                                    <option value="Güz">Güz Dönemi</option>
+                                    <option value="Bahar">Bahar Dönemi</option>
+                                    <option value="Yaz Okulu / Staj">Yaz Okulu / Staj</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">Ders Kodu ve Adı</label>
+                            <input type="text" id="course-code-input" placeholder="Örn: HEM305 - Klinik Staj I" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Ders Ekle</button>
+                    </form>
+
+                    <h5 style="font-size: 1rem; margin-bottom: 12px;">Tanımlı Dersler Listesi</h5>
+                    <div class="courses-list" style="display: flex; flex-direction: column; gap: 8px;">
+            `;
+
+            if (courses.length === 0) {
+                html += `<div style="color: var(--text-muted); font-style: italic;">Henüz tanımlanmış ders bulunmamaktadır.</div>`;
+            } else {
+                courses.forEach(c => {
+                    html += `
+                        <div style="background: #ffffff; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                            <div>
+                                <strong style="color: var(--text-main); font-size: 0.95rem;">${c.codeName}</strong>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">${c.department} • ${c.term}</div>
+                            </div>
+                            <button type="button" class="btn btn-danger btn-sm btn-del-course" data-id="${c.id}">Sil</button>
+                        </div>
+                    `;
+                });
             }
+
+            html += `</div></div>`;
+            target.innerHTML = html;
+
+            const form = document.getElementById('form-add-course');
+            if (form) {
+                form.addEventListener('submit', e => {
+                    e.preventDefault();
+                    const dept = document.getElementById('course-dept-input').value;
+                    const term = document.getElementById('course-term-input').value;
+                    const code = document.getElementById('course-code-input').value.trim();
+
+                    if (dept && term && code && window.AppDB.addCourse(dept, term, code)) {
+                        alert('Ders başarıyla eklendi.');
+                        renderDashboard();
+                    } else {
+                        alert('Ders eklenemedi veya zaten tanımlı.');
+                    }
+                });
+            }
+
+            target.querySelectorAll('.btn-del-course').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-id');
+                    if (confirm("Bu dersi silmek istediğinize emin misiniz?")) {
+                        window.AppDB.deleteCourse(id);
+                        renderDashboard();
+                    }
+                });
+            });
+        }
+
+        // ------------------------------------------------------------------
+        // SEKME 5: SORUMLU ÖĞRETİM ELEMANI YÖNETİMİ (Ekle / Sil)
+        // ------------------------------------------------------------------
+        function renderInstructorsTab(target) {
+            const instructors = window.AppDB ? window.AppDB.getInstructors() : [];
+
+            let html = `
+                <div style="max-width: 600px;">
+                    <h4 style="font-size: 1.1rem; margin-bottom: 12px;">Sorumlu Öğretim Elemanı Yönetimi</h4>
+                    
+                    <form id="form-add-instructor" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <input type="text" id="input-new-instructor" placeholder="Yeni Öğretim Elemanı Ünvan ve Adı" required style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                        <button type="submit" class="btn btn-primary">Öğretim Elemanı Ekle</button>
+                    </form>
+
+                    <div class="instructors-list" style="display: flex; flex-direction: column; gap: 8px;">
+            `;
+
+            instructors.forEach(ins => {
+                html += `
+                    <div style="background: #ffffff; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 600; color: var(--text-main);">${ins}</span>
+                        <button type="button" class="btn btn-danger btn-sm btn-del-instructor" data-name="${ins}">Sil</button>
+                    </div>
+                `;
+            });
+
+            html += `</div></div>`;
+            target.innerHTML = html;
+
+            const form = document.getElementById('form-add-instructor');
+            if (form) {
+                form.addEventListener('submit', e => {
+                    e.preventDefault();
+                    const input = document.getElementById('input-new-instructor');
+                    const val = input.value.trim();
+                    if (val && window.AppDB.addInstructor(val)) {
+                        alert('Yeni öğretim elemanı eklendi.');
+                        renderDashboard();
+                    } else {
+                        alert('Bu öğretim elemanı zaten mevcut veya geçersiz.');
+                    }
+                });
+            }
+
+            target.querySelectorAll('.btn-del-instructor').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const name = btn.getAttribute('data-name');
+                    if (confirm(`"${name}" isimli öğretim elemanını silmek istediğinize emin misiniz?`)) {
+                        window.AppDB.deleteInstructor(name);
+                        renderDashboard();
+                    }
+                });
+            });
         }
 
         function formatDate(dateStr) {
             if (!dateStr) return '—';
             try {
                 const parts = dateStr.split('-');
-                if (parts.length === 3) {
-                    return `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
-                }
+                if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
                 return new Date(dateStr).toLocaleDateString('tr-TR');
             } catch (e) {
                 return dateStr;
             }
         }
 
-        // İlk yükleme
         renderDashboard();
     };
 })();
