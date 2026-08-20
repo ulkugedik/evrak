@@ -98,7 +98,7 @@ window.AppDB = {
     // Yeni Öğrenci Uygulama Başvurusu Kaydet
     saveStudentApplication: function(data) {
         const record = {
-            id: 'APP-' + Date.now(),
+            id: data.id || 'APP-' + Date.now(),
             isTrash: false,
             ...data,
             tetkikDegerlendirmeDurumu: 'Sonuç bekleniyor',
@@ -203,3 +203,80 @@ if (!localStorage.getItem('db_instructors')) {
 if (!localStorage.getItem('db_courses')) {
     localStorage.setItem('db_courses', JSON.stringify(window.AppDB.courses));
 }
+
+// IndexedDB Dosya Depolama Sistemi (5MB Sınırını Aşmak İçin)
+window.FileStorage = {
+    dbName: 'StudentEvrakStorage',
+    dbVersion: 1,
+    storeName: 'files',
+    db: null,
+
+    init: function() {
+        return new Promise((resolve, reject) => {
+            if (this.db) return resolve(this.db);
+            const request = indexedDB.open(this.dbName, this.dbVersion);
+            request.onerror = (event) => reject(event.target.error);
+            request.onsuccess = (event) => {
+                this.db = event.target.result;
+                resolve(this.db);
+            };
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(this.storeName)) {
+                    db.createObjectStore(this.storeName);
+                }
+            };
+        });
+    },
+
+    saveFile: function(key, fileData) {
+        return this.init().then(() => {
+            return new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([this.storeName], 'readwrite');
+                const store = transaction.objectStore(this.storeName);
+                const request = store.put(fileData, key);
+                request.onsuccess = () => resolve();
+                request.onerror = (event) => reject(event.target.error);
+            });
+        });
+    },
+
+    getFile: function(key) {
+        return this.init().then(() => {
+            return new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([this.storeName], 'readonly');
+                const store = transaction.objectStore(this.storeName);
+                const request = store.get(key);
+                request.onsuccess = (event) => resolve(event.target.result);
+                request.onerror = (event) => reject(event.target.error);
+            });
+        });
+    },
+
+    deleteFile: function(key) {
+        return this.init().then(() => {
+            return new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([this.storeName], 'readwrite');
+                const store = transaction.objectStore(this.storeName);
+                const request = store.delete(key);
+                request.onsuccess = () => resolve();
+                request.onerror = (event) => reject(event.target.error);
+            });
+        });
+    },
+
+    clearAll: function() {
+        return this.init().then(() => {
+            return new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([this.storeName], 'readwrite');
+                const store = transaction.objectStore(this.storeName);
+                const request = store.clear();
+                request.onsuccess = () => resolve();
+                request.onerror = (event) => reject(event.target.error);
+            });
+        });
+    }
+};
+
+// IndexedDB Başlat
+window.FileStorage.init().catch(console.error);
