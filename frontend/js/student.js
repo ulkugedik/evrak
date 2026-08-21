@@ -217,6 +217,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         box.classList.remove('has-file');
                         const display = box.querySelector('.file-name-display');
                         if (display) display.textContent = 'Tetkik Sonuç Belgesi Seçiniz (PDF/JPG)';
+                        
+                        // Önizleme kutusunu temizleme
+                        const existingPreview = box.parentNode.querySelector('.file-preview-box');
+                        if (existingPreview) existingPreview.remove();
+                        if (hepatitisTestFileInput.dataset.objectUrl) {
+                            URL.revokeObjectURL(hepatitisTestFileInput.dataset.objectUrl);
+                            delete hepatitisTestFileInput.dataset.objectUrl;
+                        }
                     }
                     delete uploadedFileMap['hepatitisTestFile'];
                 }
@@ -237,14 +245,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (doc2ExamDate && doc2ExpiryDate) {
         doc2ExamDate.addEventListener('change', (e) => {
             if (e.target.value) {
-                const examDate = new Date(e.target.value);
-                const expiryDate = new Date(examDate);
-                expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-                
-                const yyyy = expiryDate.getFullYear();
-                const mm = String(expiryDate.getMonth() + 1).padStart(2, '0');
-                const dd = String(expiryDate.getDate()).padStart(2, '0');
-                doc2ExpiryDate.value = `${yyyy}-${mm}-${dd}`;
+                const parts = e.target.value.split('-');
+                if (parts.length === 3) {
+                    const examDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                    const expiryDate = new Date(examDate);
+                    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+                    
+                    const yyyy = expiryDate.getFullYear();
+                    const mm = String(expiryDate.getMonth() + 1).padStart(2, '0');
+                    const dd = String(expiryDate.getDate()).padStart(2, '0');
+                    doc2ExpiryDate.value = `${yyyy}-${mm}-${dd}`;
+                }
             } else {
                 doc2ExpiryDate.value = '';
             }
@@ -265,6 +276,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const nameDisplay = box ? box.querySelector('.file-name-display') : null;
                 const fileId = input.id;
 
+                // Eski object URL'yi bellek sızıntısını önlemek için iptal et
+                if (input.dataset.objectUrl) {
+                    URL.revokeObjectURL(input.dataset.objectUrl);
+                    delete input.dataset.objectUrl;
+                }
+
+                // Mevcut önizlemeyi kaldır
+                const existingPreview = box ? box.parentNode.querySelector('.file-preview-box') : null;
+                if (existingPreview) existingPreview.remove();
+
                 if (e.target.files && e.target.files.length > 0) {
                     const file = e.target.files[0];
                     const fileName = file.name;
@@ -281,6 +302,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (nameDisplay) nameDisplay.textContent = fileName;
                     if (box) box.classList.add('has-file');
+
+                    // PDF/Görsel önizleme kutusu oluşturma
+                    const isPdf = fileName.toLowerCase().endsWith('.pdf');
+                    const isImg = fileName.toLowerCase().match(/\.(jpe?g|png|gif|webp)$/);
+                    const objectUrl = URL.createObjectURL(file);
+                    input.dataset.objectUrl = objectUrl;
+
+                    const previewDiv = document.createElement('div');
+                    previewDiv.className = 'file-preview-box';
+                    previewDiv.style.marginTop = '10px';
+                    previewDiv.style.padding = '10px';
+                    previewDiv.style.border = '1px solid #cbd5e1';
+                    previewDiv.style.borderRadius = '6px';
+                    previewDiv.style.backgroundColor = '#f8fafc';
+
+                    let previewHtml = `
+                        <div class="file-preview-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <span class="file-info" style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #1e293b;">
+                                <strong style="font-size:16px; color: #10b981;">✓</strong> 
+                                <span><strong>Seçildi:</strong> ${fileName}</span>
+                            </span>
+                            <button type="button" class="btn-remove-file" style="padding: 4px 8px; font-size: 11px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">✕ Kaldır</button>
+                        </div>
+                    `;
+
+                    if (isPdf) {
+                        previewHtml += `
+                            <div class="pdf-preview-wrapper" style="margin-top: 8px; width: 100%; height: 350px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; background: #ffffff;">
+                                <iframe src="${objectUrl}" style="width: 100%; height: 100%; border: none;"></iframe>
+                            </div>
+                        `;
+                    } else if (isImg) {
+                        previewHtml += `
+                            <div class="img-preview-wrapper" style="margin-top: 8px; max-width: 100%; max-height: 250px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; display: inline-block; background: #ffffff;">
+                                <img src="${objectUrl}" style="max-width: 100%; max-height: 250px; display: block; object-fit: contain;" />
+                            </div>
+                        `;
+                    }
+
+                    previewDiv.innerHTML = previewHtml;
+                    if (box) {
+                        box.parentNode.appendChild(previewDiv);
+                    }
+
+                    // Kaldır butonu için event listener
+                    previewDiv.querySelector('.btn-remove-file').addEventListener('click', () => {
+                        input.value = '';
+                        if (input.dataset.objectUrl) {
+                            URL.revokeObjectURL(input.dataset.objectUrl);
+                            delete input.dataset.objectUrl;
+                        }
+                        previewDiv.remove();
+                        delete uploadedFileMap[fileId];
+                        if (nameDisplay) nameDisplay.textContent = 'Dosya Seçiniz veya Sürükleyiniz';
+                        if (box) box.classList.remove('has-file');
+                        if (window.updateProgress) window.updateProgress();
+                    });
+
                 } else {
                     delete uploadedFileMap[fileId];
                     if (nameDisplay) nameDisplay.textContent = 'Dosya Seçiniz veya Sürükleyiniz';

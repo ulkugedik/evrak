@@ -1199,7 +1199,9 @@ foreach ($aktif_formlar as $af) {
         // İşe Giriş Formu Muayene Tarihi Seçilince Bitiş Tarihini Otomatik 1 Yıl Sonrasına Ayarlama
         function muayeneTarihiHesapla(input) {
             if (!input || !input.value) return;
-            var secilenTarih = new Date(input.value);
+            var parts = input.value.split('-');
+            if (parts.length !== 3) return;
+            var secilenTarih = new Date(parts[0], parts[1] - 1, parts[2]);
             if (isNaN(secilenTarih.getTime())) return;
             
             secilenTarih.setFullYear(secilenTarih.getFullYear() + 1);
@@ -1225,6 +1227,12 @@ foreach ($aktif_formlar as $af) {
                 fileInput.dataset.hasPreviewListener = "true";
 
                 fileInput.addEventListener('change', function() {
+                    // Eski object URL'yi bellek sızıntısını önlemek için iptal et
+                    if (fileInput.dataset.objectUrl) {
+                        URL.revokeObjectURL(fileInput.dataset.objectUrl);
+                        delete fileInput.dataset.objectUrl;
+                    }
+
                     var existingPreview = fileInput.parentNode.querySelector('.file-preview-box');
                     if (existingPreview) existingPreview.remove();
 
@@ -1238,13 +1246,39 @@ foreach ($aktif_formlar as $af) {
 
                         var previewDiv = document.createElement('div');
                         previewDiv.className = 'file-preview-box';
-                        previewDiv.innerHTML = `
-                            <span class="file-info">
-                                <strong style="font-size:16px;">✓</strong> 
-                                <span><strong>${icon} Yüklendi / Seçildi:</strong> ${fileName} (${sizeText})</span>
-                            </span>
-                            <button type="button" class="btn-remove-file" onclick="clearSelectedFile(this)">✕ Kaldır</button>
+                        previewDiv.style.marginTop = '10px';
+                        previewDiv.style.padding = '10px';
+                        previewDiv.style.border = '1px solid #ced4da';
+                        previewDiv.style.borderRadius = '4px';
+                        previewDiv.style.backgroundColor = '#f8f9fa';
+
+                        var objectUrl = URL.createObjectURL(file);
+                        fileInput.dataset.objectUrl = objectUrl;
+
+                        var previewHtml = `
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                <span class="file-info" style="display: flex; align-items: center; gap: 6px;">
+                                    <strong style="font-size:16px; color:#28a745;">✓</strong> 
+                                    <span><strong>${icon} Seçildi:</strong> ${fileName} (${sizeText})</span>
+                                </span>
+                                <button type="button" class="btn-remove-file" onclick="clearSelectedFile(this)" style="padding: 4px 8px; font-size: 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">✕ Kaldır</button>
+                            </div>
                         `;
+
+                        if (isPdf) {
+                            previewHtml += `
+                                <div class="pdf-preview-container" style="width: 100%; height: 400px; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; background: #fff;">
+                                    <iframe src="${objectUrl}" style="width: 100%; height: 100%; border: none;"></iframe>
+                                </div>
+                            `;
+                        } else if (fileName.toLowerCase().match(/\.(jpe?g|png|gif|webp)$/)) {
+                            previewHtml += `
+                                <div class="img-preview-container" style="margin-top: 10px; text-align: left;">
+                                    <img src="${objectUrl}" style="max-width: 100%; max-height: 250px; border: 1px solid #ddd; border-radius: 4px; object-fit: contain;">
+                                </div>
+                            `;
+                        }
+                        previewDiv.innerHTML = previewHtml;
                         fileInput.parentNode.insertBefore(previewDiv, fileInput.nextSibling);
                     }
                 });
@@ -1255,7 +1289,13 @@ foreach ($aktif_formlar as $af) {
             var previewDiv = btn.closest('.file-preview-box');
             if (previewDiv) {
                 var fileInput = previewDiv.parentNode.querySelector('input[type="file"]');
-                if (fileInput) fileInput.value = '';
+                if (fileInput) {
+                    fileInput.value = '';
+                    if (fileInput.dataset.objectUrl) {
+                        URL.revokeObjectURL(fileInput.dataset.objectUrl);
+                        delete fileInput.dataset.objectUrl;
+                    }
+                }
                 previewDiv.remove();
             }
         }
