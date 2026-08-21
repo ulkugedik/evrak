@@ -149,6 +149,9 @@ foreach ($aktif_formlar as $af) {
 
     <!-- Başarılı Başvuru Bildirimi -->
     <?php if(isset($_GET['durum']) && $_GET['durum'] == 'basarili'): ?>
+        <script>
+            alert("Form başarıyla gönderildi! Takip numaranız: <?php echo htmlspecialchars($_GET['takip_no'] ?? ''); ?>");
+        </script>
         <div style="max-width:900px; margin:20px auto; background:#d4edda; color:#155724; padding:20px; border-radius:8px; border-left:6px solid #28a745; text-align:center; position:relative; z-index:20; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
             <h3 style="margin:0 0 10px 0; font-size:20px;">✓ Form Başvurunuz Başarıyla Alınmıştır!</h3>
             <p style="margin:5px 0; font-size:15px;">Başvurunuzun durumunu sorgulamak için aşağıdaki **Başvuru Takip Numarasını** saklayınız:</p>
@@ -1244,6 +1247,10 @@ foreach ($aktif_formlar as $af) {
                         var isPdf = fileName.toLowerCase().endsWith('.pdf');
                         var icon = isPdf ? '📄 PDF' : '📎 Dosya';
 
+                        if (isPdf) {
+                            alert("PDF başarıyla eklendi!");
+                        }
+
                         var previewDiv = document.createElement('div');
                         previewDiv.className = 'file-preview-box';
                         previewDiv.style.marginTop = '10px';
@@ -1259,7 +1266,7 @@ foreach ($aktif_formlar as $af) {
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                                 <span class="file-info" style="display: flex; align-items: center; gap: 6px;">
                                     <strong style="font-size:16px; color:#28a745;">✓</strong> 
-                                    <span><strong>${icon} Seçildi:</strong> ${fileName} (${sizeText})</span>
+                                    <span style="color:#28a745; font-weight:bold;"><strong>${icon} Başarıyla Eklendi:</strong> ${fileName} (${sizeText})</span>
                                 </span>
                                 <button type="button" class="btn-remove-file" onclick="clearSelectedFile(this)" style="padding: 4px 8px; font-size: 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">✕ Kaldır</button>
                             </div>
