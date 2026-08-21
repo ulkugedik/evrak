@@ -17,6 +17,9 @@ window.AppDB = {
         "Öğr. Gör. Elif Arslan"
     ])),
 
+    // Giriş yapabilecek Yöneticiler/Yetkililer Listesi
+    admins: JSON.parse(localStorage.getItem('db_admins') || JSON.stringify([])),
+
     // Sorumlu Öğretim Elemanı Listesi
     instructors: JSON.parse(localStorage.getItem('db_instructors') || JSON.stringify([
         "Prof. Dr. Fatma Yıldız",
@@ -104,6 +107,48 @@ window.AppDB = {
         this.advisors = this.advisors.filter(a => a !== name);
         localStorage.setItem('db_advisors', JSON.stringify(this.advisors));
         return true;
+    },
+
+    // Yetkili/Yönetici İşlemleri (Süper Admin Yönetimi)
+    getAdmins: function() {
+        return this.admins;
+    },
+    addAdmin: function(adminObj) {
+        if (!adminObj || !adminObj.name) return false;
+        // Check duplicate by email, tc, or formatted name
+        const exists = this.admins.some(a => {
+            const aName = (a.title ? a.title + ' ' : '') + a.name;
+            const newName = (adminObj.title ? adminObj.title + ' ' : '') + adminObj.name;
+            return aName === newName || a.email === adminObj.email || a.tc === adminObj.tc;
+        });
+        if (exists) return false;
+        this.admins.push(adminObj);
+        localStorage.setItem('db_admins', JSON.stringify(this.admins));
+        return true;
+    },
+    deleteAdmin: function(email) {
+        this.admins = this.admins.filter(a => a.email !== email);
+        localStorage.setItem('db_admins', JSON.stringify(this.admins));
+        return true;
+    },
+    updateAdmin: function(oldEmail, newAdminObj) {
+        if (!newAdminObj || !newAdminObj.name) return false;
+        // Check duplicate by email, tc, or formatted name (excluding self)
+        const exists = this.admins.some(a => {
+            if (a.email === oldEmail) return false;
+            const aName = (a.title ? a.title + ' ' : '') + a.name;
+            const newName = (newAdminObj.title ? newAdminObj.title + ' ' : '') + newAdminObj.name;
+            return aName === newName || a.email === newAdminObj.email || a.tc === newAdminObj.tc;
+        });
+        if (exists) return false;
+
+        const idx = this.admins.findIndex(a => a.email === oldEmail);
+        if (idx !== -1) {
+            this.admins[idx] = newAdminObj;
+            localStorage.setItem('db_admins', JSON.stringify(this.admins));
+            return true;
+        }
+        return false;
     },
 
     // Sorumlu Öğretim Elemanı İşlemleri
@@ -250,8 +295,24 @@ window.AppDB = {
 // İlk çalıştırma senkronizasyonu
 window.AppDB.getAllApplications();
 
+// Migration: Revert advisors back to strings if they are objects
+try {
+    const rawAdvisors = localStorage.getItem('db_advisors');
+    if (rawAdvisors) {
+        const parsed = JSON.parse(rawAdvisors);
+        if (parsed.length > 0 && typeof parsed[0] === 'object') {
+            localStorage.removeItem('db_advisors');
+        }
+    }
+} catch (e) {
+    console.error('Advisor rollback migration error:', e);
+}
+
 if (!localStorage.getItem('db_advisors')) {
     localStorage.setItem('db_advisors', JSON.stringify(window.AppDB.advisors));
+}
+if (!localStorage.getItem('db_admins')) {
+    localStorage.setItem('db_admins', JSON.stringify(window.AppDB.admins));
 }
 if (!localStorage.getItem('db_instructors')) {
     localStorage.setItem('db_instructors', JSON.stringify(window.AppDB.instructors));

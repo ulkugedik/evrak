@@ -22,7 +22,8 @@
                     <h1>Balıkesir Üniversitesi Sağlık Bilimleri Uygulama ve Staj Portalı</h1>
                 </div>
             </div>
-            <div class="header-actions">
+            <div class="header-actions" style="display: flex; align-items: center; gap: 12px;">
+                <span id="user-info-display" class="hidden" style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);"></span>
                 <button type="button" class="btn btn-primary" id="btn-login-trigger">
                     Yetkili Girişi
                 </button>
@@ -550,6 +551,56 @@
             <div class="modal-footer" style="justify-content: space-between;">
                 <button type="button" class="btn btn-secondary" id="btn-close-login">İptal</button>
                 <button type="button" class="btn btn-primary" id="btn-submit-login">Giriş Yap</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Administrator Modal -->
+    <div class="modal-overlay" id="editAdminModal">
+        <div class="modal-card" style="max-width: 480px;">
+            <div class="modal-header">
+                <h2>Yetkili Bilgilerini Düzenle</h2>
+                <p>Yetkili bilgilerini güncelleyin.</p>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-admin">
+                    <input type="hidden" id="edit-admin-old-email">
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px;">
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Unvan</label>
+                            <select id="edit-admin-title" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background-color: #fff;">
+                                <option value="Prof. Dr.">Prof. Dr.</option>
+                                <option value="Doç. Dr.">Doç. Dr.</option>
+                                <option value="Dr. Öğr. Üyesi">Dr. Öğr. Üyesi</option>
+                                <option value="Öğr. Gör.">Öğr. Gör.</option>
+                                <option value="Arş. Gör. Dr.">Arş. Gör. Dr.</option>
+                                <option value="Arş. Gör.">Arş. Gör.</option>
+                                <option value="Uzman">Uzman</option>
+                                <option value="Memur">Memur</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Adı Soyadı</label>
+                            <input type="text" id="edit-admin-name" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">T.C. Kimlik No</label>
+                            <input type="text" id="edit-admin-tc" required maxlength="11" pattern="[0-9]{11}" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">E-posta Adresi</label>
+                            <input type="email" id="edit-admin-email" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Giriş Şifresi</label>
+                            <input type="password" id="edit-admin-password" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="justify-content: space-between;">
+                <button type="button" class="btn btn-secondary" id="btn-close-edit-admin">İptal</button>
+                <button type="submit" form="form-edit-admin" class="btn btn-primary">Değişiklikleri Kaydet</button>
             </div>
         </div>
     </div>

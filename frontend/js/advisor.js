@@ -6,8 +6,10 @@
  */
 
 (function() {
-    window.initDanismanPortali = function(container) {
+    window.initDanismanPortali = function(container, userRole) {
         if (!container) return;
+
+        const role = userRole || 'superadmin';
 
         let activeAdminTab = 'applications'; // 'applications', 'trash', 'advisors', 'courses', 'instructors'
         let expandedCardId = null;
@@ -30,12 +32,24 @@
 
         function getApplications() {
             try {
+                let apps = [];
                 if (window.AppDB && window.AppDB.getAllApplications) {
-                    return window.AppDB.getAllApplications();
+                    apps = window.AppDB.getAllApplications();
+                } else {
+                    const stored = localStorage.getItem('db_applications');
+                    const parsed = stored ? JSON.parse(stored) : [];
+                    apps = Array.isArray(parsed) ? parsed : [];
                 }
-                const stored = localStorage.getItem('db_applications');
-                const apps = stored ? JSON.parse(stored) : [];
-                return Array.isArray(apps) ? apps : [];
+
+                // Filter applications if logged in user is admin (non-superadmin)
+                if (role !== 'superadmin') {
+                    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                    if (currentUser && currentUser.displayName) {
+                        const loggedInName = currentUser.displayName;
+                        apps = apps.filter(app => app.academicAdvisor === loggedInName);
+                    }
+                }
+                return apps;
             } catch (e) {
                 console.error('getApplications error:', e);
                 return [];
@@ -108,6 +122,10 @@
                         <button type="button" class="btn ${activeAdminTab === 'trash' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="trash">
                             Çöp Kutusu
                         </button>
+                        ${role === 'superadmin' ? `
+                        <button type="button" class="btn ${activeAdminTab === 'admins' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="admins">
+                            Yetkili Yönetimi
+                        </button>
                         <button type="button" class="btn ${activeAdminTab === 'advisors' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="advisors">
                             Danışman Yönetimi
                         </button>
@@ -117,6 +135,7 @@
                         <button type="button" class="btn ${activeAdminTab === 'instructors' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="instructors">
                             Öğretim Elemanı Yönetimi
                         </button>
+                        ` : ''}
                     </div>
                 </div>
 
@@ -146,6 +165,8 @@
                 renderArchiveTab(contentDiv);
             } else if (activeAdminTab === 'trash') {
                 renderTrashTab(contentDiv);
+            } else if (activeAdminTab === 'admins') {
+                renderAdminsTab(contentDiv);
             } else if (activeAdminTab === 'advisors') {
                 renderAdvisorsTab(contentDiv);
             } else if (activeAdminTab === 'courses') {
@@ -575,7 +596,7 @@
                                     Stajı Onayla
                                 </button>
                                 <button type="button" class="btn btn-danger btn-bulk-reject" data-student-id="${app.id}" style="font-weight: 600; padding: 10px 16px;">
-                                    Stajı Reddet (Çöpe At)
+                                    Stajı Reddet (Arşive Al)
                                 </button>
                             </div>
                         </div>
@@ -1055,6 +1076,185 @@
                     const name = btn.getAttribute('data-name');
                     if (confirm(`"${name}" isimli danışmanı silmek istediğinize emin misiniz?`)) {
                         window.AppDB.deleteAdvisor(name);
+                        renderDashboard();
+                    }
+                });
+            });
+        }
+
+        // ------------------------------------------------------------------
+        // SEKME: YETKİLİ YÖNETİMİ (Sadece Süper Admin)
+        // ------------------------------------------------------------------
+        function renderAdminsTab(target) {
+            const admins = window.AppDB ? window.AppDB.getAdmins() : [];
+
+            let html = `
+                <div style="max-width: 650px;">
+                    <h4 style="font-size: 1.1rem; margin-bottom: 12px;">Yetkili (Yönetici) Yönetimi</h4>
+                    
+                    <form id="form-add-admin" style="background: #ffffff; padding: 20px; border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 24px;">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;">
+                            <div>
+                                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Unvan</label>
+                                <select id="admin-title-input" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background-color: #fff;">
+                                    <option value="Prof. Dr.">Prof. Dr.</option>
+                                    <option value="Doç. Dr.">Doç. Dr.</option>
+                                    <option value="Dr. Öğr. Üyesi">Dr. Öğr. Üyesi</option>
+                                    <option value="Öğr. Gör.">Öğr. Gör.</option>
+                                    <option value="Arş. Gör. Dr.">Arş. Gör. Dr.</option>
+                                    <option value="Arş. Gör.">Arş. Gör.</option>
+                                    <option value="Uzman">Uzman</option>
+                                    <option value="Memur">Memur</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Adı Soyadı</label>
+                                <input type="text" id="admin-name-input" placeholder="Örn: Kemal Sunal" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">T.C. Kimlik No</label>
+                                <input type="text" id="admin-tc-input" placeholder="11 Haneli Rakam" required maxlength="11" pattern="[0-9]{11}" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">E-posta Adresi</label>
+                                <input type="email" id="admin-email-input" placeholder="isim@balikesir.edu.tr" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                            </div>
+                            <div style="grid-column: span 2;">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Giriş Şifresi</label>
+                                <input type="password" id="admin-password-input" placeholder="Şifre" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; font-weight: 600; padding: 10px;">Yetkili Ekle</button>
+                    </form>
+
+                    <div class="admins-list" style="display: flex; flex-direction: column; gap: 8px;">
+            `;
+
+            admins.forEach(adm => {
+                const displayName = `${adm.title || ''} ${adm.name}`;
+                const displayMeta = `TC: ${adm.tc || '—'} • E-posta: ${adm.email || '—'} • Şifre: ${adm.password || '—'}`;
+                const deleteKey = adm.email;
+
+                html += `
+                    <div style="background: #ffffff; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                        <div>
+                            <span style="font-weight: 600; color: var(--text-main); display: block;">${displayName}</span>
+                            <small style="color: var(--text-muted); font-size: 0.8rem;">${displayMeta}</small>
+                        </div>
+                        <div style="display: flex;">
+                            <button type="button" class="btn btn-outline btn-sm btn-edit-admin" data-key="${deleteKey}" style="margin-right: 6px; font-weight: 600; padding: 4px 10px;">Düzenle</button>
+                            <button type="button" class="btn btn-danger btn-sm btn-del-admin" data-key="${deleteKey}">Sil</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div></div>`;
+            target.innerHTML = html;
+
+            // TC mask for add form
+            const tcInput = document.getElementById('admin-tc-input');
+            if (tcInput) {
+                tcInput.addEventListener('input', e => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                });
+            }
+
+            const form = document.getElementById('form-add-admin');
+            if (form) {
+                form.addEventListener('submit', e => {
+                    e.preventDefault();
+                    const title = document.getElementById('admin-title-input').value;
+                    const name = document.getElementById('admin-name-input').value.trim();
+                    const tc = document.getElementById('admin-tc-input').value.trim();
+                    const email = document.getElementById('admin-email-input').value.trim();
+                    const password = document.getElementById('admin-password-input').value;
+
+                    if (tc.length !== 11) {
+                        alert('T.C. Kimlik Numarası 11 haneli olmalıdır.');
+                        return;
+                    }
+
+                    const adminObj = { title, name, tc, email, password };
+
+                    if (window.AppDB && window.AppDB.addAdmin(adminObj)) {
+                        alert('Yeni yetkili başarıyla eklendi.');
+                        renderDashboard();
+                    } else {
+                        alert('Bu yetkili zaten mevcut veya bilgileri geçersiz.');
+                    }
+                });
+            }
+
+            // Edit Modal & Listeners Setup
+            const editModal = document.getElementById('editAdminModal');
+            const closeEditBtn = document.getElementById('btn-close-edit-admin');
+            const editForm = document.getElementById('form-edit-admin');
+
+            if (closeEditBtn && editModal) {
+                closeEditBtn.onclick = () => {
+                    editModal.classList.remove('active');
+                };
+            }
+
+            // Edit button click listeners
+            target.querySelectorAll('.btn-edit-admin').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const key = btn.getAttribute('data-key');
+                    const adminObj = admins.find(a => a.email === key);
+                    if (adminObj && editModal) {
+                        document.getElementById('edit-admin-old-email').value = adminObj.email;
+                        document.getElementById('edit-admin-title').value = adminObj.title || '';
+                        document.getElementById('edit-admin-name').value = adminObj.name || '';
+                        document.getElementById('edit-admin-tc').value = adminObj.tc || '';
+                        document.getElementById('edit-admin-email').value = adminObj.email || '';
+                        document.getElementById('edit-admin-password').value = adminObj.password || '';
+                        editModal.classList.add('active');
+                    }
+                });
+            });
+
+            // TC mask for edit form
+            const editTcInput = document.getElementById('edit-admin-tc');
+            if (editTcInput) {
+                editTcInput.addEventListener('input', e => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                });
+            }
+
+            // Submit listener on edit form
+            if (editForm) {
+                editForm.onsubmit = e => {
+                    e.preventDefault();
+                    const oldEmail = document.getElementById('edit-admin-old-email').value;
+                    const title = document.getElementById('edit-admin-title').value;
+                    const name = document.getElementById('edit-admin-name').value.trim();
+                    const tc = document.getElementById('edit-admin-tc').value.trim();
+                    const email = document.getElementById('edit-admin-email').value.trim();
+                    const password = document.getElementById('edit-admin-password').value;
+
+                    if (tc.length !== 11) {
+                        alert('T.C. Kimlik Numarası 11 haneli olmalıdır.');
+                        return;
+                    }
+
+                    const adminObj = { title, name, tc, email, password };
+
+                    if (window.AppDB && window.AppDB.updateAdmin(oldEmail, adminObj)) {
+                        alert('Yetkili bilgileri başarıyla güncellendi.');
+                        if (editModal) editModal.classList.remove('active');
+                        renderDashboard();
+                    } else {
+                        alert('Güncelleme başarısız. Bu e-posta, T.C. veya isim başka bir yetkili tarafından kullanılıyor olabilir.');
+                    }
+                };
+            }
+
+            target.querySelectorAll('.btn-del-admin').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const key = btn.getAttribute('data-key');
+                    if (confirm(`Bu yetkiliyi silmek istediğinize emin misiniz?`)) {
+                        window.AppDB.deleteAdmin(key);
                         renderDashboard();
                     }
                 });
