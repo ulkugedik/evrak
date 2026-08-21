@@ -554,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 4. OLUMLU BİLDİRİM (Başvuru Başarıyla Gönderildi)
-            alert("BAŞARILI (OLUMLU):\n\nBaşvurunuz ve yüklediğiniz tüm belgeler başarıyla sisteme kaydedildi ve Yönetici Paneline iletildi.");
+            alert("BAŞARILI:\n\nBaşvurunuz ve yüklediğiniz tüm belgeler başarıyla sisteme kaydedildi ve Yönetici Paneline iletildi.");
 
             // PDF çıktısı ve özet için linkler
             const docTitles = {
