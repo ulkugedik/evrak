@@ -84,7 +84,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const advisorSelect = document.getElementById('academicAdvisor');
         if (advisorSelect && window.AppDB) {
             const currentVal = advisorSelect.value;
-            const advisors = window.AppDB.getAdvisors();
+            const advisors = [...window.AppDB.getAdvisors()];
+            
+            // Add dynamic admin names as selectable advisors
+            const admins = window.AppDB.getAdmins ? window.AppDB.getAdmins() : [];
+            admins.forEach(adm => {
+                const fullName = `${adm.title || ''} ${adm.name}`;
+                if (!advisors.includes(fullName)) {
+                    advisors.push(fullName);
+                }
+            });
+
             advisorSelect.innerHTML = '<option value="">-- Akademik Danışmanınızı Seçiniz --</option>';
             advisors.forEach(adv => {
                 const opt = document.createElement('option');
@@ -166,11 +176,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const username = loginUsernameInput.value.trim();
             const password = loginPasswordInput.value;
 
+            let role = null;
+            let displayName = "";
             if ((username === 'admin' || username === 'danisman' || username === 'saglik') && (password === 'admin' || password === '123')) {
+                role = 'superadmin';
+                displayName = "Süper Yönetici (Sistem Yöneticisi)";
+            } else if (window.AppDB) {
+                const adminsList = window.AppDB.getAdmins ? window.AppDB.getAdmins() : [];
+                const adminObj = adminsList.find(a => (a.email === username || a.tc === username) && a.password === password);
+                if (adminObj) {
+                    role = 'admin';
+                    displayName = `${adminObj.title || ''} ${adminObj.name}`;
+                }
+            }
+
+            if (role) {
+                localStorage.setItem('currentUser', JSON.stringify({ role: role, username: username, displayName: displayName }));
                 loginModal.classList.remove('active');
                 if (btnLoginTrigger) btnLoginTrigger.classList.add('hidden');
                 if (btnLogout) btnLogout.classList.remove('hidden');
-                showAuthorizedView('admin');
+                showAuthorizedView(role);
             } else {
                 if (loginErrorMsg) {
                     loginErrorMsg.classList.remove('hidden');
@@ -195,7 +220,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showAuthorizedView(role) {
+        const userInfoDisplay = document.getElementById('user-info-display');
         if (role === 'student') {
+            localStorage.removeItem('currentUser');
+            if (userInfoDisplay) {
+                userInfoDisplay.classList.add('hidden');
+                userInfoDisplay.textContent = '';
+            }
             if (studentForm) studentForm.classList.remove('hidden');
             if (progressCard) progressCard.classList.remove('hidden');
             if (navTabs) navTabs.classList.remove('hidden');
@@ -214,8 +245,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 dashboardContainer.innerHTML = '';
             }
 
+            if (userInfoDisplay) {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                userInfoDisplay.textContent = currentUser.displayName || 'Yetkili';
+                userInfoDisplay.classList.remove('hidden');
+            }
+
             if (window.initDanismanPortali) {
-                window.initDanismanPortali(dashboardContainer);
+                const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                window.initDanismanPortali(dashboardContainer, currentUser.role);
             } else {
                 dashboardContainer.innerHTML = '<div class="system-notice"><p>Yönetim paneli yüklenemedi.</p></div>';
             }
