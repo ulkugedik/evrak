@@ -258,11 +258,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Dosya Saklama Haritası (Tüm fonksiyonların erişebilmesi için en üste alındı)
+    const uploadedFileMap = {};
+
     // ----------------------------------------------------------------------
     // YÜKLENEN TÜM BELGELER İÇİN ANINDA DOSYA ADI VE BAĞLANTI SAKLAMA
     // ----------------------------------------------------------------------
-    const uploadedFileMap = {};
-
     function initFileUploads() {
         const fileInputs = document.querySelectorAll('input[type="file"]');
         fileInputs.forEach(input => {
