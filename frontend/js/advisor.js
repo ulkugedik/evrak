@@ -23,7 +23,9 @@
             idCard: "Kimlik Fotokopisi",
             hemogram: "Hemogram Tetkik Raporu",
             elisa: "ELISA Tetkik Raporu",
-            chestXray: "Akciğer Grafisi Raporu"
+            chestXray: "Akciğer Grafisi Raporu",
+            hepatitisTest: "Hepatit B Tetkik Raporu",
+            vaccineCard: "Hepatit B Aşı Kartı"
         };
 
         function getApplications() {
@@ -31,6 +33,140 @@
                 return window.AppDB.getAllApplications();
             }
             return JSON.parse(localStorage.getItem('db_applications') || '[]');
+        }
+
+        function saveApps(apps) {
+            if (window.AppDB) {
+                window.AppDB.applications = apps;
+                window.AppDB.saveApplicationsToStorage();
+            } else {
+                localStorage.setItem('db_applications', JSON.stringify(apps));
+            }
+        }
+
+        function sendEmailNotification(studentEmail, studentName, studentNo, isApproved, rejectReason) {
+            const emailModal = document.getElementById('emailModal');
+            const sendingState = document.getElementById('email-sending-state');
+            const sentState = document.getElementById('email-sent-state');
+            const previewContent = document.getElementById('emailPreviewContent');
+            const closeBtn = document.getElementById('btn-close-email-modal');
+            const mailtoBtn = document.getElementById('btn-trigger-mailto');
+            
+            if (!emailModal) return;
+
+            const deliveryMethod = localStorage.getItem('settings_email_delivery_method') || 'simulation';
+            const serviceId = localStorage.getItem('settings_emailjs_service_id') || '';
+            const templateId = localStorage.getItem('settings_emailjs_template_id') || '';
+            const publicKey = localStorage.getItem('settings_emailjs_public_key') || '';
+
+            if (deliveryMethod === 'emailjs' && (!serviceId || !templateId || !publicKey)) {
+                alert('E-posta ayarları eksik! Lütfen Sistem & E-posta Ayarları sekmesinden EmailJS anahtarlarını tanımlayınız. Bildirim şimdilik simüle edilecektir.');
+                localStorage.setItem('settings_email_delivery_method', 'simulation');
+                sendEmailNotification(studentEmail, studentName, studentNo, isApproved, rejectReason);
+                return;
+            }
+
+            // Reset modal state
+            sendingState.style.display = 'block';
+            sentState.style.display = 'none';
+            closeBtn.style.display = 'none';
+            mailtoBtn.style.display = 'none';
+            emailModal.classList.add('active');
+
+            const subject = "Balıkesir Üniversitesi Sağlık Bilimleri Uygulama ve Staj Başvurusu Sonucu";
+            let body = "";
+
+            if (isApproved) {
+                body = `Kime: ${studentEmail}\nKonu: ${subject}\n\nSayın ${studentName},\n\n${studentNo} numaralı staj başvurunuz ve ilgili tüm evraklarınız akademik danışmanınız ile sağlık birimimiz tarafından incelenmiş olup ONAYLANMIŞTIR.\n\nStaj işlemlerinizi tamamlamak üzere ilgili kurum ve birimlerle iletişime geçebilirsiniz.\n\nSaygılarımızla,\nBalıkesir Üniversitesi Sağlık Bilimleri Dekanlığı`;
+            } else {
+                body = `Kime: ${studentEmail}\nKonu: ${subject}\n\nSayın ${studentName},\n\n${studentNo} numaralı staj başvurunuz yapılan incelemeler sonucunda staj kurallarına veya evrak eksikliklerine bağlı olarak REDDEDİLMİŞTİR.\n\nRed Gerekçesi: ${rejectReason || 'Evraklar staj kurallarına uygun değildir.'}\n\nLütfen evraklarınızı eksiksiz ve kurallara uygun olarak düzenleyip portal üzerinden tekrar başvuru yapınız.\n\nSaygılarımızla,\nBalıkesir Üniversitesi Sağlık Bilimleri Dekanlığı`;
+            }
+
+            if (deliveryMethod === 'emailjs') {
+                const messageText = isApproved 
+                    ? `Staj başvurunuz ve ilgili tüm evraklarınız akademik danışmanınız ile sağlık birimimiz tarafından incelenmiş olup ONAYLANMIŞTIR.` 
+                    : `Staj başvurunuz yapılan incelemeler sonucunda staj kurallarına veya evrak eksikliklerine bağlı olarak REDDEDİLMİŞTİR. Red Gerekçesi: ${rejectReason || 'Evraklar staj kurallarına uygun değildir.'}`;
+
+                const templateParams = {
+                    to_email: studentEmail,
+                    to_name: studentName,
+                    student_no: studentNo,
+                    status: isApproved ? 'ONAYLANDI' : 'REDDEDİLDİ',
+                    rejection_reason: rejectReason || 'Belirtilmedi',
+                    subject: subject,
+                    message: messageText
+                };
+
+                // Trigger EmailJS
+                emailjs.send(serviceId, templateId, templateParams, publicKey)
+                    .then(response => {
+                        sendingState.style.display = 'none';
+                        sentState.style.display = 'block';
+                        previewContent.innerHTML = `<span style="color:#16a34a; font-weight:bold;">[EmailJS Gerçek Mail İletildi]</span>\n\n` + body;
+                        closeBtn.style.display = 'block';
+                        
+                        closeBtn.onclick = () => {
+                            emailModal.classList.remove('active');
+                        };
+                    })
+                    .catch(err => {
+                        sendingState.style.display = 'none';
+                        sentState.style.display = 'block';
+                        previewContent.innerHTML = `<span style="color:#dc2626; font-weight:bold;">[Hata: Mail Gönderilemedi!]</span>\nDetay: ${JSON.stringify(err)}\n\n` + body;
+                        closeBtn.style.display = 'block';
+                        mailtoBtn.style.display = 'flex';
+                        
+                        closeBtn.onclick = () => {
+                            emailModal.classList.remove('active');
+                        };
+
+                        mailtoBtn.onclick = () => {
+                            const mailtoSubject = encodeURIComponent(subject);
+                            const mailtoBody = encodeURIComponent(body.replace(`Kime: ${studentEmail}\nKonu: ${subject}\n\n`, ''));
+                            window.location.href = `mailto:${studentEmail}?subject=${mailtoSubject}&body=${mailtoBody}`;
+                        };
+                    });
+            } else {
+                // Simulation & Mailto Modu
+                setTimeout(() => {
+                    sendingState.style.display = 'none';
+                    sentState.style.display = 'block';
+                    previewContent.textContent = body;
+                    closeBtn.style.display = 'block';
+                    mailtoBtn.style.display = 'flex';
+
+                    // Bind close button
+                    closeBtn.onclick = () => {
+                        emailModal.classList.remove('active');
+                    };
+
+                    // Bind mailto button
+                    mailtoBtn.onclick = () => {
+                        const mailtoSubject = encodeURIComponent(subject);
+                        const mailtoBody = encodeURIComponent(body.replace(`Kime: ${studentEmail}\nKonu: ${subject}\n\n`, ''));
+                        window.location.href = `mailto:${studentEmail}?subject=${mailtoSubject}&body=${mailtoBody}`;
+                    };
+
+                    // Auto trigger mailto if mode is mailto
+                    if (deliveryMethod === 'mailto') {
+                        const mailtoSubject = encodeURIComponent(subject);
+                        const mailtoBody = encodeURIComponent(body.replace(`Kime: ${studentEmail}\nKonu: ${subject}\n\n`, ''));
+                        window.location.href = `mailto:${studentEmail}?subject=${mailtoSubject}&body=${mailtoBody}`;
+                    }
+                }, 1200);
+            }
+        }
+
+        function getFileLinkHtml(doc) {
+            if (!doc) return '—';
+            if (doc.fileUrl && doc.fileUrl.startsWith('IndexedDB:')) {
+                const storageKey = doc.fileUrl.split(':')[1];
+                return `<a href="#" class="doc-link view-file-btn" data-storage-key="${storageKey}" data-file-name="${doc.fileName || 'belge'}">${doc.fileName || 'Dosyayı İncele/İndir'}</a>`;
+            } else if (doc.fileUrl || doc.fileName) {
+                return `<a href="${doc.fileUrl || '#'}" target="_blank" download="${doc.fileName || 'belge'}" class="doc-link">${doc.fileName || 'Dosyayı İncele/İndir'}</a>`;
+            } else {
+                return `<span style="color: var(--text-muted); font-style: italic;">Dosya Bağlantısı Yok</span>`;
+            }
         }
 
         function renderDashboard() {
@@ -62,6 +198,9 @@
                         <button type="button" class="btn ${activeAdminTab === 'instructors' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="instructors">
                             Öğretim Elemanı Yönetimi
                         </button>
+                        <button type="button" class="btn ${activeAdminTab === 'settings' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="settings">
+                            Sistem & E-posta Ayarları
+                        </button>
                     </div>
                 </div>
 
@@ -88,6 +227,8 @@
                 renderCoursesTab(contentDiv);
             } else if (activeAdminTab === 'instructors') {
                 renderInstructorsTab(contentDiv);
+            } else if (activeAdminTab === 'settings') {
+                renderSettingsTab(contentDiv);
             }
         }
 
@@ -194,9 +335,10 @@
             filteredApps.forEach(app => {
                 const statuses = app.documentsStatus || {};
                 const keys = Object.keys(statuses);
-                const totalDocs = keys.length;
-                const approvedCount = keys.filter(k => statuses[k].status === 'Onaylandı').length;
-                const pendingCount = keys.filter(k => statuses[k].status === 'Bekliyor').length;
+                const activeKeys = keys.filter(k => statuses[k].status !== 'Yüklenmedi');
+                const totalDocs = activeKeys.length;
+                const approvedCount = activeKeys.filter(k => statuses[k].status === 'Onaylandı').length;
+                const pendingCount = activeKeys.filter(k => statuses[k].status === 'Bekliyor').length;
 
                 let progressBadgeClass = 'badge-pending';
                 let progressBadgeText = `${approvedCount}/${totalDocs} Onaylandı`;
@@ -251,40 +393,26 @@
                             </div>
                         </div>
 
-                        <!-- Toplu İşlem Butonları (7. Madde Gereği) -->
-                        <div class="bulk-action-card" style="background: #f8fafc; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-                            <div>
-                                <strong>Gerekli Evrak İşlemleri:</strong>
-                                <span style="font-size: 0.85rem; color: var(--text-muted); display: block;">Evrakları toplu olarak onaylayabilir veya toplu reddederek çöp kutusuna gönderebilirsiniz.</span>
-                            </div>
-                            <div style="display: flex; gap: 10px;">
-                                <button type="button" class="btn btn-success btn-bulk-approve" data-student-id="${app.id}">
-                                    Tüm Belgeleri Onayla
-                                </button>
-                                <button type="button" class="btn btn-danger btn-bulk-reject" data-student-id="${app.id}">
-                                    Tüm Belgeleri Reddet (Çöpe At)
-                                </button>
-                            </div>
-                        </div>
-
                         <!-- Evraklar Listesi -->
                         <div class="docs-review-section">
-                            <h5>Yüklenen Belgelerin Detaylı İnceleme Durumu</h5>
-                            <table class="docs-table">
+                            <h5 style="margin-top: 10px; margin-bottom: 12px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-folder-open"></i> Genel & İdari Belgeler
+                            </h5>
+                            <table class="docs-table" style="margin-bottom: 24px;">
                                 <thead>
                                     <tr>
                                         <th>Belge Adı</th>
                                         <th>Belge Detayı / Tarih</th>
                                         <th>Dosya / Link</th>
                                         <th>Durum</th>
+                                        <th style="text-align: right; width: 180px;">İşlem</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${Object.keys(docNames).map(key => {
+                                    ${["isgCertificate", "privacyAgreement", "idCard"].map(key => {
                                         const doc = statuses[key] || { status: 'Yüklenmedi' };
                                         let detail = '—';
                                         if (key === 'isgCertificate' && doc.date) detail = `Tarih: ${formatDate(doc.date)}`;
-                                        else if (key === 'medicalForm' && doc.date) detail = `Muayene: ${formatDate(doc.date)}`;
                                         else if (key === 'privacyAgreement' && doc.physicalCount) detail = `Fiziksel: ${doc.physicalCount} Adet`;
                                         else if (doc.date) detail = `Tarih: ${formatDate(doc.date)}`;
 
@@ -300,17 +428,235 @@
                                             fileAction = `<span style="color: var(--text-muted); font-style: italic;">Dosya Bağlantısı Yok</span>`;
                                         }
 
+                                        let actionButtons = '—';
+                                        if (doc.status !== 'Yüklenmedi') {
+                                            actionButtons = `
+                                                <button type="button" class="btn btn-success btn-sm btn-approve-doc" data-student-id="${app.id}" data-doc-key="${key}" style="padding: 4px 8px; font-size: 0.75rem; margin-right: 4px;">
+                                                    <i class="fa-solid fa-check"></i> Onayla
+                                                </button>
+                                                <button type="button" class="btn btn-danger btn-sm btn-reject-doc" data-student-id="${app.id}" data-doc-key="${key}" style="padding: 4px 8px; font-size: 0.75rem;">
+                                                    <i class="fa-solid fa-xmark"></i> Reddet
+                                                </button>
+                                            `;
+                                        }
+
                                         return `
                                             <tr>
                                                 <td style="font-weight: 600;">${docNames[key]}</td>
                                                 <td>${detail}</td>
                                                 <td>${fileAction}</td>
-                                                <td><span class="badge ${statusBadgeClass}">${doc.status}</span></td>
+                                                <td>
+                                                    <span class="badge ${statusBadgeClass}">${doc.status}</span>
+                                                    ${doc.rejectionReason ? `<div style="font-size: 0.725rem; color: var(--danger); margin-top: 4px; line-height: 1.2;">Neden: ${doc.rejectionReason}</div>` : ''}
+                                                </td>
+                                                <td style="text-align: right; white-space: nowrap;">${actionButtons}</td>
                                             </tr>
                                         `;
                                     }).join('')}
                                 </tbody>
                             </table>
+
+                            <h5 style="margin-top: 20px; margin-bottom: 12px; font-weight: 700; color: var(--danger); display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-file-medical"></i> Sağlık & Tetkik Belgeleri
+                            </h5>
+                            <table class="docs-table">
+                                <thead>
+                                    <tr>
+                                        <th>Belge Adı</th>
+                                        <th>Belge Detayı / Tarih</th>
+                                        <th>Dosya / Link</th>
+                                        <th>Durum</th>
+                                        <th style="text-align: right; width: 180px;">İşlem</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${["medicalForm", "hemogram", "elisa", "chestXray", "hepatitisTest", "vaccineCard"].map(key => {
+                                        const doc = statuses[key] || { status: 'Yüklenmedi' };
+                                        let detail = '—';
+                                        if (key === 'medicalForm' && doc.date) detail = `Muayene: ${formatDate(doc.date)}`;
+                                        else if (doc.date) detail = `Tarih: ${formatDate(doc.date)}`;
+
+                                        let statusBadgeClass = 'badge-pending';
+                                        if (doc.status === 'Onaylandı') statusBadgeClass = 'badge-approved';
+                                        else if (doc.status === 'Reddedildi') statusBadgeClass = 'badge-rejected';
+                                        else if (doc.status === 'Yüklenmedi') statusBadgeClass = 'optional-badge';
+
+                                        let fileAction = '—';
+                                        if (doc.fileUrl || doc.fileName) {
+                                            fileAction = `<a href="${doc.fileUrl || '#'}" target="_blank" download="${doc.fileName || 'belge'}" class="doc-link">${doc.fileName || 'Dosyayı İncele/İndir'}</a>`;
+                                        } else if (doc.status !== 'Yüklenmedi') {
+                                            fileAction = `<span style="color: var(--text-muted); font-style: italic;">Dosya Bağlantısı Yok</span>`;
+                                        }
+
+                                        let actionButtons = '—';
+                                        if (doc.status !== 'Yüklenmedi') {
+                                            actionButtons = `
+                                                <button type="button" class="btn btn-success btn-sm btn-approve-doc" data-student-id="${app.id}" data-doc-key="${key}" style="padding: 4px 8px; font-size: 0.75rem; margin-right: 4px;">
+                                                    <i class="fa-solid fa-check"></i> Onayla
+                                                </button>
+                                                <button type="button" class="btn btn-danger btn-sm btn-reject-doc" data-student-id="${app.id}" data-doc-key="${key}" style="padding: 4px 8px; font-size: 0.75rem;">
+                                                    <i class="fa-solid fa-xmark"></i> Reddet
+                                                </button>
+                                            `;
+                                        }
+
+                                        return `
+                                            <tr>
+                                                <td style="font-weight: 600;">${docNames[key]}</td>
+                                                <td>${detail}</td>
+                                                <td>${fileAction}</td>
+                                                <td>
+                                                    <span class="badge ${statusBadgeClass}">${doc.status}</span>
+                                                    ${doc.rejectionReason ? `<div style="font-size: 0.725rem; color: var(--danger); margin-top: 4px; line-height: 1.2;">Neden: ${doc.rejectionReason}</div>` : ''}
+                                                </td>
+                                                <td style="text-align: right; white-space: nowrap;">${actionButtons}</td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Sağlık & Aşı Takip Formu (7. Madde Gereği) -->
+                        <div class="health-tracking-section" style="margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 20px;">
+                            <h5 style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-heart-pulse" style="color: var(--danger);"></i>
+                                Hepatit B & Aşı Takip Bilgileri
+                            </h5>
+                            
+                            <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px;">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                                    <div>
+                                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Hepatit B Tetkiki Yapıldı mı?</label>
+                                        <div style="font-weight: 700; font-size: 0.95rem; color: ${app.hepatitisTested === 'Evet' ? 'green' : 'red'};">
+                                            ${app.hepatitisTested === 'Evet' ? 'Evet, Yapıldı' : 'Hayır, Yapılmadı'}
+                                        </div>
+                                    </div>
+                                    
+                                    ${app.hepatitisTested === 'Evet' ? `
+                                    <div>
+                                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Tetkik Tarihi</label>
+                                        <div style="font-size: 0.95rem;">${formatDate(app.hepatitisTestDate)}</div>
+                                    </div>
+                                    ` : ''}
+                                    
+                                    <div>
+                                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Tetkik Değerlendirme Durumu</label>
+                                        <select class="select-hep-eval" data-student-id="${app.id}" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem;">
+                                            <option value="Sonuç bekleniyor" ${app.tetkikDegerlendirmeDurumu === 'Sonuç bekleniyor' ? 'selected' : ''}>Sonuç bekleniyor</option>
+                                            <option value="Bağışık" ${app.tetkikDegerlendirmeDurumu === 'Bağışık' ? 'selected' : ''}>Bağışık</option>
+                                            <option value="Aşı gerekli" ${app.tetkikDegerlendirmeDurumu === 'Aşı gerekli' ? 'selected' : ''}>Aşı gerekli</option>
+                                            <option value="Ek değerlendirme gerekli" ${app.tetkikDegerlendirmeDurumu === 'Ek değerlendirme gerekli' ? 'selected' : ''}>Ek değerlendirme gerekli</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Aşı Listesine Dahil mi?</label>
+                                        <select class="select-vaccine-list" data-student-id="${app.id}" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem;">
+                                            <option value="Hayır" ${app.asiListesineDahilMi === 'Hayır' ? 'selected' : ''}>Hayır</option>
+                                            <option value="Evet" ${app.asiListesineDahilMi === 'Evet' ? 'selected' : ''}>Evet</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Aşı Kartı & Belgesi ve Kontrolü -->
+                                <div style="border-top: 1px solid var(--border); padding-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                                    <div>
+                                        <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); display: block;">Öğrenci Aşı Kartı:</span>
+                                        ${(statuses.vaccineCard && (statuses.vaccineCard.fileUrl || statuses.vaccineCard.fileName)) ? `
+                                            <a href="${statuses.vaccineCard.fileUrl}" target="_blank" download="${statuses.vaccineCard.fileName}" style="font-size: 0.85rem; color: #2563eb; font-weight: 600; text-decoration: underline;">
+                                                <i class="fa-solid fa-file-pdf"></i> ${statuses.vaccineCard.fileName}
+                                            </a>
+                                        ` : `
+                                            <span style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">Henüz dosya yüklenmedi</span>
+                                        `}
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">Aşı Kartı Kontrolü:</span>
+                                        <select class="select-vaccine-card-status" data-student-id="${app.id}" style="padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.85rem;">
+                                            <option value="Bekliyor" ${(statuses.vaccineCard && statuses.vaccineCard.status === 'Bekliyor') ? 'selected' : ''}>Bekliyor</option>
+                                            <option value="Uygun" ${(statuses.vaccineCard && statuses.vaccineCard.status === 'Uygun') ? 'selected' : ''}>Uygun</option>
+                                            <option value="Eksik-Hatalı" ${(statuses.vaccineCard && statuses.vaccineCard.status === 'Eksik-Hatalı') ? 'selected' : ''}>Eksik-Hatalı</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Aşı Dozları Listesi -->
+                            <div class="vaccine-doses-wrapper" style="display: ${app.asiListesineDahilMi === 'Evet' ? 'block' : 'none'};">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <h6 style="margin: 0; font-size: 0.9rem; color: var(--text-main);">Aşı Doz Geçmişi / Planı</h6>
+                                    <button type="button" class="btn btn-outline btn-sm btn-add-dose" data-student-id="${app.id}">
+                                        <i class="fa-solid fa-plus"></i> Doz Ekle
+                                    </button>
+                                </div>
+                                
+                                <div class="doses-table-container">
+                                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;" class="doses-table">
+                                        <thead>
+                                            <tr style="background: #f1f5f9; border-bottom: 2px solid var(--border);">
+                                                <th style="padding: 8px; width: 120px;">Doz No</th>
+                                                <th style="padding: 8px; width: 140px;">Aşı Tarihi</th>
+                                                <th style="padding: 8px;">Yapıldığı Kurum</th>
+                                                <th style="padding: 8px; text-align: right; width: 60px;">İşlem</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${(app.vaccineDoses && app.vaccineDoses.length > 0) ? app.vaccineDoses.map((dose, doseIndex) => `
+                                                <tr style="border-bottom: 1px solid var(--border);">
+                                                    <td style="padding: 8px; font-weight: 600;">
+                                                        <select class="select-dose-no" data-student-id="${app.id}" data-dose-index="${doseIndex}" style="padding: 4px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8rem; width: 100%;">
+                                                            <option value="1. Doz" ${dose.doseNo === '1. Doz' ? 'selected' : ''}>1. Doz</option>
+                                                            <option value="2. Doz" ${dose.doseNo === '2. Doz' ? 'selected' : ''}>2. Doz</option>
+                                                            <option value="3. Doz" ${dose.doseNo === '3. Doz' ? 'selected' : ''}>3. Doz</option>
+                                                            <option value="Ek Doz" ${dose.doseNo === 'Ek Doz' ? 'selected' : ''}>Ek Doz</option>
+                                                        </select>
+                                                    </td>
+                                                    <td style="padding: 8px;">
+                                                        <input type="date" class="input-dose-date" data-student-id="${app.id}" data-dose-index="${doseIndex}" value="${dose.date || ''}" style="padding: 4px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8rem; width: 100%;">
+                                                    </td>
+                                                    <td style="padding: 8px;">
+                                                        <select class="select-dose-inst" data-student-id="${app.id}" data-dose-index="${doseIndex}" style="padding: 4px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8rem; width: 100%;">
+                                                            <option value="Aile Sağlığı Merkezi (ASM)" ${dose.institution === 'Aile Sağlığı Merkezi (ASM)' ? 'selected' : ''}>Aile Sağlığı Merkezi (ASM)</option>
+                                                            <option value="İl Sağlık Müdürlüğü" ${dose.institution === 'İl Sağlık Müdürlüğü' ? 'selected' : ''}>İl Sağlık Müdürlüğü</option>
+                                                            <option value="Üniversite Hastanesi" ${dose.institution === 'Üniversite Hastanesi' ? 'selected' : ''}>Üniversite Hastanesi</option>
+                                                            <option value="Özel Hastane" ${dose.institution === 'Özel Hastane' ? 'selected' : ''}>Özel Hastane</option>
+                                                            <option value="Diğer" ${dose.institution === 'Diğer' ? 'selected' : ''}>Diğer</option>
+                                                        </select>
+                                                    </td>
+                                                    <td style="padding: 8px; text-align: right;">
+                                                        <button type="button" class="btn btn-danger btn-sm btn-del-dose" data-student-id="${app.id}" data-dose-index="${doseIndex}" style="padding: 3px 6px; font-size: 0.75rem;">
+                                                            <i class="fa-solid fa-trash-can"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            `).join('') : `
+                                                <tr>
+                                                    <td colspan="4" style="padding: 12px; text-align: center; color: var(--text-muted); font-style: italic;">
+                                                        Kayıtlı aşı dozu bulunmamaktadır.
+                                                    </td>
+                                                </tr>
+                                            `}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Staj / İşlem Onaylama Kararı (Aşağıya Taşındı) -->
+                        <div class="bulk-action-card" style="background: #f8fafc; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-top: 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                            <div>
+                                <strong style="font-size: 0.95rem; color: var(--text-main);"><i class="fa-solid fa-gavel"></i> Staj Başvuru Kararı:</strong>
+                                <span style="font-size: 0.85rem; color: var(--text-muted); display: block;">Öğrencinin tüm staj işlemlerini nihai olarak onaylayabilir veya reddederek Çöp Kutusuna (reddedilenlere) taşıyabilirsiniz.</span>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button type="button" class="btn btn-success btn-bulk-approve" data-student-id="${app.id}" style="font-weight: 600; padding: 10px 16px;">
+                                    Stajı Onayla
+                                </button>
+                                <button type="button" class="btn btn-danger btn-bulk-reject" data-student-id="${app.id}" style="font-weight: 600; padding: 10px 16px;">
+                                    Stajı Reddet (Çöpe At)
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -340,9 +686,13 @@
                     e.stopPropagation();
                     const studentId = btn.getAttribute('data-student-id');
                     if (window.AppDB && window.AppDB.bulkApproveApplication) {
+                        const apps = getApplications();
+                        const app = apps.find(a => a.id === studentId);
                         window.AppDB.bulkApproveApplication(studentId);
-                        alert('Başvuru ve tüm evrakları onaylandı!');
                         renderDashboard();
+                        if (app && app.email) {
+                            sendEmailNotification(app.email, app.fullName, app.studentNo, true);
+                        }
                     }
                 });
             });
@@ -352,13 +702,215 @@
                 btn.addEventListener('click', e => {
                     e.stopPropagation();
                     const studentId = btn.getAttribute('data-student-id');
-                    const reason = prompt("Reddetme ve çöp kutusuna gönderme gerekçesini giriniz:", "Evraklar eksik veya okunamıyor.");
+                    const reason = prompt("Staj başvurusunu reddetme gerekçesini giriniz:", "Evraklar staj kurallarına uygun değildir.");
                     if (reason !== null) {
                         if (window.AppDB && window.AppDB.bulkRejectApplication) {
+                            const apps = getApplications();
+                            const app = apps.find(a => a.id === studentId);
                             window.AppDB.bulkRejectApplication(studentId, reason);
-                            alert('Başvuru reddedildi ve Çöp Kutusuna taşındı.');
+                            renderDashboard();
+                            if (app && app.email) {
+                                sendEmailNotification(app.email, app.fullName, app.studentNo, false, reason);
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Tetkik Değerlendirme Değişikliği (7. Madde Gereği)
+            listContainer.querySelectorAll('.select-hep-eval').forEach(select => {
+                select.addEventListener('change', e => {
+                    const studentId = select.getAttribute('data-student-id');
+                    const val = e.target.value;
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app) {
+                        app.tetkikDegerlendirmeDurumu = val;
+                        // Eğer aşı gerekliyse otomatik aşı listesine al
+                        if (val === 'Aşı gerekli') {
+                            app.asiListesineDahilMi = 'Evet';
+                        }
+                        saveApps(apps);
+                        renderDashboard();
+                    }
+                });
+            });
+
+            // Aşı Listesi Katılım Değişikliği (7. Madde Gereği)
+            listContainer.querySelectorAll('.select-vaccine-list').forEach(select => {
+                select.addEventListener('change', e => {
+                    const studentId = select.getAttribute('data-student-id');
+                    const val = e.target.value;
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app) {
+                        app.asiListesineDahilMi = val;
+                        saveApps(apps);
+                        renderDashboard();
+                    }
+                });
+            });
+
+            // Aşı Kartı Kontrol Durumu Değişikliği (7. Madde Gereği)
+            listContainer.querySelectorAll('.select-vaccine-card-status').forEach(select => {
+                select.addEventListener('change', e => {
+                    const studentId = select.getAttribute('data-student-id');
+                    const val = e.target.value;
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app) {
+                        if (!app.documentsStatus) app.documentsStatus = {};
+                        if (!app.documentsStatus.vaccineCard) app.documentsStatus.vaccineCard = { status: 'Bekliyor' };
+                        app.documentsStatus.vaccineCard.status = val;
+                        saveApps(apps);
+                        renderDashboard();
+                    }
+                });
+            });
+
+            // Doz Ekleme
+            listContainer.querySelectorAll('.btn-add-dose').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    const studentId = btn.getAttribute('data-student-id');
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app) {
+                        if (!app.vaccineDoses) app.vaccineDoses = [];
+                        const nextDoseNum = app.vaccineDoses.length + 1;
+                        const nextDoseLabel = nextDoseNum <= 3 ? `${nextDoseNum}. Doz` : 'Ek Doz';
+                        app.vaccineDoses.push({
+                            doseNo: nextDoseLabel,
+                            date: '',
+                            institution: 'Aile Sağlığı Merkezi (ASM)',
+                            status: 'Bekliyor'
+                        });
+                        saveApps(apps);
+                        renderDashboard();
+                    }
+                });
+            });
+
+            // Doz Silme
+            listContainer.querySelectorAll('.btn-del-dose').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    const studentId = btn.getAttribute('data-student-id');
+                    const doseIndex = parseInt(btn.getAttribute('data-dose-index'));
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app && app.vaccineDoses) {
+                        app.vaccineDoses.splice(doseIndex, 1);
+                        saveApps(apps);
+                        renderDashboard();
+                    }
+                });
+            });
+
+            // Doz No Değişikliği
+            listContainer.querySelectorAll('.select-dose-no').forEach(select => {
+                select.addEventListener('change', e => {
+                    const studentId = select.getAttribute('data-student-id');
+                    const doseIndex = parseInt(select.getAttribute('data-dose-index'));
+                    const val = e.target.value;
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app && app.vaccineDoses && app.vaccineDoses[doseIndex]) {
+                        app.vaccineDoses[doseIndex].doseNo = val;
+                        saveApps(apps);
+                    }
+                });
+            });
+
+            // Aşı Tarihi Değişikliği
+            listContainer.querySelectorAll('.input-dose-date').forEach(input => {
+                input.addEventListener('change', e => {
+                    const studentId = input.getAttribute('data-student-id');
+                    const doseIndex = parseInt(input.getAttribute('data-dose-index'));
+                    const val = e.target.value;
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app && app.vaccineDoses && app.vaccineDoses[doseIndex]) {
+                        app.vaccineDoses[doseIndex].date = val;
+                        saveApps(apps);
+                    }
+                });
+            });
+
+            // Aşı Kurumu Değişikliği
+            listContainer.querySelectorAll('.select-dose-inst').forEach(select => {
+                select.addEventListener('change', e => {
+                    const studentId = select.getAttribute('data-student-id');
+                    const doseIndex = parseInt(select.getAttribute('data-dose-index'));
+                    const val = e.target.value;
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app && app.vaccineDoses && app.vaccineDoses[doseIndex]) {
+                        app.vaccineDoses[doseIndex].institution = val;
+                        saveApps(apps);
+                    }
+                });
+            });
+
+            // Tekil Belge Onaylama
+            listContainer.querySelectorAll('.btn-approve-doc').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const studentId = btn.getAttribute('data-student-id');
+                    const docKey = btn.getAttribute('data-doc-key');
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app && app.documentsStatus && app.documentsStatus[docKey]) {
+                        app.documentsStatus[docKey].status = 'Onaylandı';
+                        delete app.documentsStatus[docKey].rejectionReason;
+                        saveApps(apps);
+                        renderDashboard();
+                    }
+                });
+            });
+
+            // Tekil Belge Reddetme
+            listContainer.querySelectorAll('.btn-reject-doc').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const studentId = btn.getAttribute('data-student-id');
+                    const docKey = btn.getAttribute('data-doc-key');
+                    const reason = prompt("Belgeyi reddetme gerekçesini giriniz:", "Belge uygun görülmedi veya okunamıyor.");
+                    if (reason !== null) {
+                        const apps = getApplications();
+                        const app = apps.find(a => a.id === studentId);
+                        if (app && app.documentsStatus && app.documentsStatus[docKey]) {
+                            app.documentsStatus[docKey].status = 'Reddedildi';
+                            app.documentsStatus[docKey].rejectionReason = reason;
+                            saveApps(apps);
                             renderDashboard();
                         }
+                    }
+                });
+            });
+
+            // IndexedDB Dosya Görüntüleme/İndirme Butonları
+            listContainer.querySelectorAll('.view-file-btn').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const key = btn.getAttribute('data-storage-key');
+                    const fileName = btn.getAttribute('data-file-name');
+                    if (window.FileStorage) {
+                        window.FileStorage.getFile(key).then(fileData => {
+                            if (fileData && fileData.url) {
+                                const link = document.createElement('a');
+                                link.href = fileData.url;
+                                link.download = fileName || 'dosya';
+                                link.target = '_blank';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            } else {
+                                alert('Dosya veritabanında bulunamadı!');
+                            }
+                        }).catch(err => {
+                            console.error(err);
+                            alert('Dosya yüklenirken hata oluştu!');
+                        });
                     }
                 });
             });
@@ -435,6 +987,12 @@
                     if (confirm("Bu başvuruyu KALICI OLARAK silmek istediğinize emin misiniz? Bu işlem geri alınamaz.")) {
                         if (window.AppDB && window.AppDB.deletePermanently) {
                             window.AppDB.deletePermanently(id);
+                            if (window.FileStorage) {
+                                const fileKeys = ['doc1_file', 'doc2_file', 'doc3_file', 'doc4_file', 'doc5_file', 'doc6_file', 'doc7_file', 'hepatitisTestFile', 'vaccineCardFile'];
+                                fileKeys.forEach(k => {
+                                    window.FileStorage.deleteFile(`${id}_${k}`).catch(console.error);
+                                });
+                            }
                             renderDashboard();
                         }
                     }
@@ -653,6 +1211,84 @@
                     }
                 });
             });
+        }
+
+        function renderSettingsTab(target) {
+            const serviceId = localStorage.getItem('settings_emailjs_service_id') || '';
+            const templateId = localStorage.getItem('settings_emailjs_template_id') || '';
+            const publicKey = localStorage.getItem('settings_emailjs_public_key') || '';
+            const deliveryMethod = localStorage.getItem('settings_email_delivery_method') || 'simulation';
+
+            target.innerHTML = `
+                <div style="max-width: 600px;">
+                    <h4 style="font-size: 1.1rem; margin-bottom: 8px;"><i class="fa-solid fa-gears"></i> Sistem & E-posta Bildirim Ayarları</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+                        Öğrencilerin staj onay veya red durumlarında otomatik e-posta gönderim ayarlarını buradan yapabilirsiniz.
+                    </p>
+                    
+                    <form id="form-system-settings" style="background: #ffffff; padding: 20px; border: 1px solid var(--border); border-radius: var(--radius-md);">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">E-posta Gönderim Yöntemi</label>
+                            <select id="setting-delivery-method" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem;">
+                                <option value="simulation" ${deliveryMethod === 'simulation' ? 'selected' : ''}>Simülasyon Modu (Sadece ekranda gösterir)</option>
+                                <option value="mailto" ${deliveryMethod === 'mailto' ? 'selected' : ''}>Outlook / Mail İstemcisi Yöntemi (Cihazın uygulamasını açar)</option>
+                                <option value="emailjs" ${deliveryMethod === 'emailjs' ? 'selected' : ''}>Gerçek Otomatik E-posta (EmailJS Servisi ile Arka Planda)</option>
+                            </select>
+                        </div>
+                        
+                        <div id="emailjs-settings-group" style="display: ${deliveryMethod === 'emailjs' ? 'block' : 'none'}; border-top: 1px dashed var(--border); padding-top: 16px; margin-top: 16px;">
+                            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius-sm); padding: 12px; font-size: 0.8rem; color: #1e3a8a; margin-bottom: 16px; line-height: 1.4;">
+                                <strong>Bilgi:</strong> Gerçek otomatik mail gönderimi için ücretsiz bir <a href="https://www.emailjs.com" target="_blank" style="text-decoration: underline; font-weight: 700; color: #1d4ed8;">EmailJS</a> hesabı açıp Gmail veya Outlook hesabınızı bağlamanız gerekmektedir. Ardından oradan alacağınız anahtarları aşağıya yazınız.
+                            </div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">EmailJS Service ID</label>
+                                <input type="text" id="setting-service-id" placeholder="Örn: service_xxxx" value="${serviceId}" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                            </div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">EmailJS Template ID</label>
+                                <input type="text" id="setting-template-id" placeholder="Örn: template_xxxx" value="${templateId}" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                            </div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">EmailJS Public Key</label>
+                                <input type="text" id="setting-public-key" placeholder="Örn: user_xxxx veya public_key_xxxx" value="${publicKey}" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; font-weight: 600;">Ayarları Kaydet</button>
+                    </form>
+                </div>
+            `;
+
+            const methodSelect = document.getElementById('setting-delivery-method');
+            const emailjsGroup = document.getElementById('emailjs-settings-group');
+            
+            if (methodSelect && emailjsGroup) {
+                methodSelect.addEventListener('change', () => {
+                    emailjsGroup.style.display = methodSelect.value === 'emailjs' ? 'block' : 'none';
+                });
+            }
+
+            const form = document.getElementById('form-system-settings');
+            if (form) {
+                form.addEventListener('submit', e => {
+                    e.preventDefault();
+                    const method = document.getElementById('setting-delivery-method').value;
+                    const sId = document.getElementById('setting-service-id').value.trim();
+                    const tId = document.getElementById('setting-template-id').value.trim();
+                    const pKey = document.getElementById('setting-public-key').value.trim();
+
+                    localStorage.setItem('settings_email_delivery_method', method);
+                    localStorage.setItem('settings_emailjs_service_id', sId);
+                    localStorage.setItem('settings_emailjs_template_id', tId);
+                    localStorage.setItem('settings_emailjs_public_key', pKey);
+
+                    alert('Sistem ve E-posta ayarları başarıyla kaydedildi!');
+                    renderDashboard();
+                });
+            }
         }
 
         function formatDate(dateStr) {

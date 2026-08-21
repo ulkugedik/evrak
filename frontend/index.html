@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sağlık Bilimleri Uygulama ve Staj Portalı</title>
+    <title>Balıkesir Üniversitesi Sağlık Bilimleri Uygulama ve Staj Portalı</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,8 +16,7 @@
         <header class="main-header">
             <div class="header-brand">
                 <div>
-                    <h1>Sağlık Bilimleri Uygulama ve Staj Portalı</h1>
-                    <p>Uygulama ve Staj Belgeleri Takip Sistemi</p>
+                    <h1>Balıkesir Üniversitesi Sağlık Bilimleri Uygulama ve Staj Portalı</h1>
                 </div>
             </div>
             <div class="header-actions">
@@ -51,6 +50,9 @@
             </button>
             <button type="button" class="tab-btn" data-tab="tab-documents" role="tab">
                 3. Uygulama Belgeleri (7 Belge)
+            </button>
+            <button type="button" class="tab-btn" data-tab="tab-health" role="tab">
+                4. Sağlık & Aşı Takip
             </button>
         </nav>
 
@@ -255,8 +257,11 @@
                     <p>İstenen 7 adet uygulama belgesini PDF veya JPG formatında yükleyiniz ve tarih bilgilerini doldurunuz.</p>
                 </div>
 
-                <div class="documents-list">
-                    
+                <!-- Genel & İdari Belgeler Bölümü -->
+                <div class="doc-section-header" style="margin-top: 10px; margin-bottom: 14px; padding-bottom: 6px; border-bottom: 2px solid var(--primary); font-weight: 700; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-folder-open" style="color: var(--primary);"></i> Genel & İdari Belgeler
+                </div>
+                <div class="documents-list" style="margin-bottom: 30px;">
                     <!-- Belge 1 -->
                     <div class="doc-card" id="docCard1">
                         <div class="doc-badge required-badge">Kurum Kuralına Göre</div>
@@ -274,32 +279,6 @@
                                 <div class="file-upload-box">
                                     <input type="file" id="doc1_file" name="doc1_file" accept=".pdf,.jpg,.jpeg">
                                     <span class="file-name-display">Dosya Seçiniz veya Sürükleyiniz</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Belge 2 -->
-                    <div class="doc-card" id="docCard2">
-                        <div class="doc-badge required-badge">Kurum Kuralına Göre</div>
-                        <div class="doc-info">
-                            <h3>2. İşe Giriş / Periyodik Muayene Formu</h3>
-                            <p class="doc-desc">Muayene tarihi girildiğinde 1 yıllık geçerlilik süresi otomatik hesaplanır.</p>
-                        </div>
-                        <div class="doc-fields">
-                            <div class="form-group">
-                                <label for="doc2_examDate">Muayene Tarihi</label>
-                                <input type="date" id="doc2_examDate" name="doc2_examDate">
-                            </div>
-                            <div class="form-group">
-                                <label for="doc2_expiryDate">Geçerlilik Bitiş Tarihi (1 Yıl Otomatik)</label>
-                                <input type="date" id="doc2_expiryDate" name="doc2_expiryDate" readonly>
-                            </div>
-                            <div class="form-group full-width">
-                                <label for="doc2_file">Dosya Yükle (PDF / JPG)</label>
-                                <div class="file-upload-box">
-                                    <input type="file" id="doc2_file" name="doc2_file" accept=".pdf,.jpg,.jpeg">
-                                    <span class="file-name-display">Dosya Seçiniz</span>
                                 </div>
                             </div>
                         </div>
@@ -339,6 +318,38 @@
                                 <label for="doc4_file">Kimlik Fotokopisi Yükle (PDF / JPG)</label>
                                 <div class="file-upload-box">
                                     <input type="file" id="doc4_file" name="doc4_file" accept=".pdf,.jpg,.jpeg">
+                                    <span class="file-name-display">Dosya Seçiniz</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sağlık & Tetkik Belgeleri Bölümü -->
+                <div class="doc-section-header" style="margin-top: 10px; margin-bottom: 14px; padding-bottom: 6px; border-bottom: 2px solid var(--danger); font-weight: 700; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-file-medical" style="color: var(--danger);"></i> Sağlık & Tetkik Belgeleri
+                </div>
+                <div class="documents-list">
+                    <!-- Belge 2 -->
+                    <div class="doc-card" id="docCard2">
+                        <div class="doc-badge required-badge">Kurum Kuralına Göre</div>
+                        <div class="doc-info">
+                            <h3>2. İşe Giriş / Periyodik Muayene Formu</h3>
+                            <p class="doc-desc">Muayene tarihi girildiğinde 1 yıllık geçerlilik süresi otomatik hesaplanır.</p>
+                        </div>
+                        <div class="doc-fields">
+                            <div class="form-group">
+                                <label for="doc2_examDate">Muayene Tarihi</label>
+                                <input type="date" id="doc2_examDate" name="doc2_examDate">
+                            </div>
+                            <div class="form-group">
+                                <label for="doc2_expiryDate">Geçerlilik Bitiş Tarihi (1 Yıl Otomatik)</label>
+                                <input type="date" id="doc2_expiryDate" name="doc2_expiryDate" readonly>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="doc2_file">Dosya Yükle (PDF / JPG)</label>
+                                <div class="file-upload-box">
+                                    <input type="file" id="doc2_file" name="doc2_file" accept=".pdf,.jpg,.jpeg">
                                     <span class="file-name-display">Dosya Seçiniz</span>
                                 </div>
                             </div>
@@ -410,11 +421,70 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
 
                 <div class="tab-footer">
                     <button type="button" class="btn btn-secondary btn-prev" data-target="tab-application">
+                        &larr; Önceki Adım
+                    </button>
+                    <button type="button" class="btn btn-primary btn-next" data-target="tab-health">
+                        Sonraki Adım &rarr;
+                    </button>
+                </div>
+            </section>
+
+            <!-- TAB 4: SAĞLIK & AŞILAMA TAKİP -->
+            <section class="tab-pane" id="tab-health">
+                <div class="section-header">
+                    <h2>Sağlık & Aşılama Takip</h2>
+                    <p>Hepatit B tetkik bilgilerinizi ve varsa aşı kartınızı bu alandan sisteme yükleyiniz.</p>
+                </div>
+
+                <div class="form-grid">
+                    <!-- Tetkik Yapıldı mı -->
+                    <div class="form-group">
+                        <label for="hepatitisTested" class="required">Hepatit B Tetkiki Yapıldı mı?</label>
+                        <div class="input-wrapper">
+                            <select id="hepatitisTested" name="hepatitisTested" required>
+                                <option value="">-- Seçiniz --</option>
+                                <option value="Evet">Evet, Yapıldı</option>
+                                <option value="Hayır">Hayır, Yapılmadı</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Tetkik Tarihi -->
+                    <div class="form-group" id="group-hep-date" style="display: none;">
+                        <label for="hepatitisTestDate" class="required">Tetkik Tarihi</label>
+                        <div class="input-wrapper">
+                            <input type="date" id="hepatitisTestDate" name="hepatitisTestDate">
+                        </div>
+                    </div>
+
+                    <!-- Tetkik Belgesi -->
+                    <div class="form-group full-width" id="group-hep-file" style="display: none;">
+                        <label for="hepatitisTestFile" class="required">Hepatit B Tetkik Belgesi / Raporu Yükle</label>
+                        <div class="file-upload-box">
+                            <input type="file" id="hepatitisTestFile" name="hepatitisTestFile" accept=".pdf,.jpg,.jpeg">
+                            <span class="file-name-display">Tetkik Sonuç Belgesi Seçiniz (PDF/JPG)</span>
+                        </div>
+                    </div>
+
+                    <!-- Aşı Kartı Belgesi (Opsiyonel / Aşılama sonrası) -->
+                    <div class="form-group full-width" style="margin-top: 16px; border-top: 1px dashed var(--border); padding-top: 20px;">
+                        <label for="vaccineCardFile">Güncel Aşı Kartı / Belgesi Yükle (Aşılama Yapıldıysa)</label>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">
+                            Eğer yetkililer tarafından aşı listesine dahil edildiyseniz ve aşılarınız yapıldıysa, aşı kartınızı bu alandan yükleyebilirsiniz.
+                        </p>
+                        <div class="file-upload-box">
+                            <input type="file" id="vaccineCardFile" name="vaccineCardFile" accept=".pdf,.jpg,.jpeg">
+                            <span class="file-name-display">Güncel Aşı Kartı Dosyası Seçiniz (PDF/JPG)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-footer">
+                    <button type="button" class="btn btn-secondary btn-prev" data-target="tab-documents">
                         &larr; Önceki Adım
                     </button>
                     <button type="submit" class="btn btn-success btn-lg" id="btnSubmitForm">
@@ -481,7 +551,42 @@
         </div>
     </div>
 
+    <!-- Email Simulation Modal -->
+    <div class="modal-overlay" id="emailModal" style="z-index: 1200;">
+        <div class="modal-card" style="max-width: 500px; border-top: 5px solid var(--primary);">
+            <div class="modal-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                <div style="background: #eff6ff; padding: 10px; border-radius: 50%; color: #3b82f6; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-paper-plane" style="font-size: 1.25rem;"></i>
+                </div>
+                <div>
+                    <h2 style="font-size: 1.15rem; margin: 0; color: var(--text-main);">E-posta Bildirimi Gönderiliyor...</h2>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Öğrenciye durum bilgilendirme e-postası hazırlanıyor.</p>
+                </div>
+            </div>
+            <div class="modal-body" style="padding-top: 10px;">
+                <div id="email-sending-state" style="text-align: center; padding: 20px 0;">
+                    <div class="spinner"></div>
+                    <p style="font-size: 0.9rem; font-weight: 600; color: var(--text-main);">E-posta sunucusu ile güvenli bağlantı kuruluyor...</p>
+                </div>
+                
+                <div id="email-sent-state" style="display: none;">
+                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-md); padding: 12px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: #16a34a; font-weight: 600; font-size: 0.875rem;">
+                        <i class="fa-solid fa-circle-check"></i> Sistem bildirimi e-postası başarıyla sıraya alındı ve iletildi!
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; font-size: 0.825rem; font-family: monospace; white-space: pre-wrap; color: #334155; line-height: 1.5; max-height: 250px; overflow-y: auto; text-align: left;" id="emailPreviewContent"></div>
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content: flex-end; gap: 8px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 14px;">
+                <button type="button" class="btn btn-secondary" id="btn-close-email-modal" style="display: none;">Kapat</button>
+                <button type="button" class="btn btn-primary" id="btn-trigger-mailto" style="display: none; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-envelope"></i> Outlook/Mail ile Gönder
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Script Imports -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="js/db.js"></script>
     <script src="js/app.js"></script>
     <script src="js/student.js"></script>
