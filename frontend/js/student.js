@@ -8,6 +8,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     const studentForm = document.getElementById('studentForm');
 
+    // Dosya Saklama Haritası (Tüm fonksiyonların erişebilmesi için en üste alındı)
+    const uploadedFileMap = {};
+
     // ----------------------------------------------------------------------
     // KARAKTER VE FORMAT SINIRLAMALARI (INPUT MASKS & CONSTRAINTS)
     // ----------------------------------------------------------------------
@@ -258,15 +261,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Dosya Saklama Haritası (Tüm fonksiyonların erişebilmesi için en üste alındı)
-    const uploadedFileMap = {};
-
     // ----------------------------------------------------------------------
     // YÜKLENEN TÜM BELGELER İÇİN ANINDA DOSYA ADI VE BAĞLANTI SAKLAMA
     // ----------------------------------------------------------------------
     function initFileUploads() {
         const fileInputs = document.querySelectorAll('input[type="file"]');
         fileInputs.forEach(input => {
+            // Chrome siyah varsayılan kutusunu engelle
+            input.setAttribute('title', '');
+
             input.addEventListener('change', (e) => {
                 const box = e.target.closest('.file-upload-box');
                 const nameDisplay = box ? box.querySelector('.file-name-display') : null;
@@ -299,8 +302,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                     reader.readAsDataURL(file);
 
-                    if (nameDisplay) nameDisplay.textContent = fileName;
-                    if (box) box.classList.add('has-file');
+                    if (nameDisplay) {
+                        nameDisplay.textContent = '✓ Yüklendi: ' + fileName;
+                        nameDisplay.style.color = '#047857';
+                        nameDisplay.style.fontWeight = '700';
+                    }
+                    if (box) {
+                        box.classList.add('has-file');
+                        box.style.backgroundColor = '#ecfdf5';
+                        box.style.borderColor = '#059669';
+                    }
 
                     // Önizleme kutusu oluşturma
                     const isPdf = fileName.toLowerCase().endsWith('.pdf');
@@ -309,24 +320,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     const previewDiv = document.createElement('div');
                     previewDiv.className = 'file-preview-box';
                     previewDiv.style.marginTop = '10px';
-                    previewDiv.style.padding = '10px';
-                    previewDiv.style.border = '1px solid #cbd5e1';
-                    previewDiv.style.borderRadius = '6px';
-                    previewDiv.style.backgroundColor = '#f8fafc';
+                    previewDiv.style.padding = '12px';
+                    previewDiv.style.border = '1px solid #059669';
+                    previewDiv.style.borderRadius = '8px';
+                    previewDiv.style.backgroundColor = '#f0fdf4';
 
                     let previewHtml = `
                         <div class="file-preview-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                            <span class="file-info" style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #1e293b;">
-                                <strong style="font-size:16px; color: #10b981;">✓</strong> 
-                                <span style="color:#10b981; font-weight:bold;">Seçilen Dosya: ${fileName}</span>
+                            <span class="file-info" style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #065f46; font-weight: 700;">
+                                ✓ Yüklenen Belge: ${fileName}
                             </span>
-                            <button type="button" class="btn-remove-file" style="padding: 4px 8px; font-size: 11px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">✕ Kaldır</button>
+                            <button type="button" class="btn-remove-file" style="padding: 5px 10px; font-size: 11px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">✕ Belgeyi Kaldır</button>
                         </div>
                     `;
 
                     if (isPdf) {
                         previewHtml += `
-                            <div class="pdf-preview-wrapper" style="margin-top: 8px; width: 100%; height: 300px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; background: #ffffff;">
+                            <div class="pdf-preview-wrapper" style="margin-top: 8px; width: 100%; height: 280px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; background: #ffffff;">
                                 <iframe src="${objectUrl}" style="width: 100%; height: 100%; border: none;"></iframe>
                             </div>
                         `;
@@ -339,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     previewDiv.innerHTML = previewHtml;
-                    if (box) {
+                    if (box && box.parentNode) {
                         box.parentNode.appendChild(previewDiv);
                     }
 
@@ -347,15 +357,31 @@ document.addEventListener('DOMContentLoaded', () => {
                         input.value = '';
                         previewDiv.remove();
                         delete uploadedFileMap[fileId];
-                        if (nameDisplay) nameDisplay.textContent = 'Dosya Seçiniz veya Sürükleyiniz';
-                        if (box) box.classList.remove('has-file');
+                        if (nameDisplay) {
+                            nameDisplay.textContent = 'Dosya Seçiniz veya Sürükleyiniz';
+                            nameDisplay.style.color = '';
+                            nameDisplay.style.fontWeight = '';
+                        }
+                        if (box) {
+                            box.classList.remove('has-file');
+                            box.style.backgroundColor = '';
+                            box.style.borderColor = '';
+                        }
                         if (window.updateProgress) window.updateProgress();
                     });
 
                 } else {
                     delete uploadedFileMap[fileId];
-                    if (nameDisplay) nameDisplay.textContent = 'Dosya Seçiniz veya Sürükleyiniz';
-                    if (box) box.classList.remove('has-file');
+                    if (nameDisplay) {
+                        nameDisplay.textContent = 'Dosya Seçiniz veya Sürükleyiniz';
+                        nameDisplay.style.color = '';
+                        nameDisplay.style.fontWeight = '';
+                    }
+                    if (box) {
+                        box.classList.remove('has-file');
+                        box.style.backgroundColor = '';
+                        box.style.borderColor = '';
+                    }
                 }
                 if (window.updateProgress) window.updateProgress();
             });
@@ -370,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
         studentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // 1. Görünür ve Zorunlu Alanların Kontrolü
+            // 1. Tüm Sekmelerdeki Zorunlu Alanların Kontrolü
             const requiredInputs = studentForm.querySelectorAll('[required]');
             let isValid = true;
             const missingFields = [];
@@ -378,14 +404,11 @@ document.addEventListener('DOMContentLoaded', () => {
             let invalidTabId = null;
 
             requiredInputs.forEach(input => {
-                // Görünürlük kontrolü (parent'ı display:none olan gizli alanları muaf tut)
-                const isVisible = input.offsetWidth > 0 && input.offsetHeight > 0 && input.closest('.form-group')?.style.display !== 'none' && input.closest('.tab-pane')?.classList.contains('active') !== false;
+                const group = input.closest('.form-group');
+                const isGroupVisible = !group || group.style.display !== 'none';
 
-                if (isVisible || input.hasAttribute('required')) {
-                    const group = input.closest('.form-group');
-                    const isGroupVisible = !group || group.style.display !== 'none';
-
-                    if (isGroupVisible && (!input.value || input.value.trim() === '')) {
+                if (isGroupVisible) {
+                    if (!input.value || input.value.trim() === '') {
                         isValid = false;
                         input.style.borderColor = 'var(--danger)';
                         
@@ -395,7 +418,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (pane) invalidTabId = pane.id;
                         }
 
-                        // Etiket adını bul
                         let labelText = 'İsimsiz Alan';
                         if (group) {
                             const lbl = group.querySelector('label');
@@ -424,15 +446,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 missingFields.push('Telefon Numarası (05XX XXX XX XX Formatında Olmalıdır)');
             }
 
-            // 2. OLUMSUZ BİLDİRİM (Form Gönderilmediyse)
+            // 2. OLUMSUZ BİLDİRİM (Eksik Bilgiler Varsa)
             if (!isValid) {
-                let errorMsg = "GÖNDERİLMEDİ (OLUMSUZ):\n\nBaşvurunuz eksik veya hatalı bilgiler nedeniyle gönderilemedi.\nLütfen aşağıdaki alanları tamamlayınız:\n\n";
+                let errorMsg = "BAŞVURU GÖNDERİLMEDİ (OLUMSUZ):\n\nYönetici paneline kaydolabilmesi için lütfen aşağıdaki eksik alanları tamamlayınız:\n\n";
                 missingFields.forEach(item => {
                     errorMsg += "• " + item + "\n";
                 });
                 alert(errorMsg);
 
-                // İlgili sekmeye otomatik geç ve odağı o alana ver
+                // Eksik alanın bulunduğu sekmeye otomatik geç
                 if (invalidTabId) {
                     const tabBtn = document.querySelector(`.tab-btn[data-tab="${invalidTabId}"]`);
                     if (tabBtn) tabBtn.click();
@@ -443,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // 3. BAŞVURU KAYIT SÜRECİ
+            // 3. BAŞVURU KAYIT SÜRECİ (Tüm Alanlar Tamamlandığında)
             const formData = new FormData(studentForm);
             const appId = 'APP-' + Date.now();
 
@@ -532,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 4. OLUMLU BİLDİRİM (Başvuru Başarıyla Gönderildi)
-            alert("BAŞARILI (OLUMLU):\n\nBaşvurunuz ve yüklediğiniz tüm uygulama belgeleriniz başarıyla sisteme iletilmiştir.\nBaşvurunuz yönetici panelinde görünmektedir.");
+            alert("BAŞARILI (OLUMLU):\n\nBaşvurunuz ve yüklediğiniz tüm belgeler başarıyla sisteme kaydedildi ve Yönetici Paneline iletildi.");
 
             // PDF çıktısı ve özet için linkler
             const docTitles = {
