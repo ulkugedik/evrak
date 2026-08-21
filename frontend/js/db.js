@@ -6,7 +6,44 @@
 
 window.AppDB = {
     // Öğrenci Başvuruları Koleksiyonu
-    applications: JSON.parse(localStorage.getItem('db_applications') || '[]'),
+    applications: JSON.parse(localStorage.getItem('db_applications') || JSON.stringify([
+        {
+            id: 'APP-1700000000001',
+            isTrash: false,
+            studentNo: '2024105001',
+            fullName: 'Ayşe Yılmaz',
+            tcNo: '12345678901',
+            department: 'Hemşirelik',
+            studentClass: '3. Sınıf',
+            phone: '0555 123 45 67',
+            email: 'ayse.yilmaz@ogrenci.edu.tr',
+            academicAdvisor: 'Prof. Dr. Ahmet Yılmaz',
+            academicYear: '2026-2027',
+            term: 'Güz',
+            courseNameCode: 'HEM301 - Klinik Hemşirelik Uygulaması I',
+            institution: 'Üniversite Eğitim ve Araştırma Hastanesi',
+            unitName: 'Dahiliye Servisi',
+            applicationDays: 'Pazartesi, Salı',
+            responsibleInstructor: 'Prof. Dr. Fatma Yıldız',
+            hepatitisTested: 'Evet',
+            hepatitisTestDate: '2026-01-15',
+            tetkikDegerlendirmeDurumu: 'Sonuç bekleniyor',
+            asiListesineDahilMi: 'Hayır',
+            vaccineDoses: [],
+            documentsStatus: {
+                isgCertificate: { status: 'Bekliyor', date: '2026-01-10', fileName: 'isg_sertifikasi.pdf' },
+                medicalForm: { status: 'Bekliyor', date: '2026-01-12', expiryDate: '2027-01-12', fileName: 'ise_giris_formu.pdf' },
+                privacyAgreement: { status: 'Bekliyor', physicalCount: 1, fileName: 'gizlilik_sozlesmesi.pdf' },
+                idCard: { status: 'Bekliyor', fileName: 'kimlik_fotokopisi.jpg' },
+                hemogram: { status: 'Bekliyor', date: '2026-01-15', fileName: 'hemogram_sonuc.pdf' },
+                elisa: { status: 'Bekliyor', date: '2026-01-15', fileName: 'elisa_sonuc.pdf' },
+                chestXray: { status: 'Bekliyor', date: '2026-01-15', fileName: 'akciger_grafi.pdf' },
+                hepatitisTest: { status: 'Bekliyor', date: '2026-01-15', fileName: 'hepatitis_sonuc.pdf' },
+                vaccineCard: { status: 'Yüklenmedi' }
+            },
+            submissionDate: '2026-01-16T10:00:00.000Z'
+        }
+    ])),
 
     // Danışman Listesi
     advisors: JSON.parse(localStorage.getItem('db_advisors') || JSON.stringify([
@@ -194,6 +231,9 @@ window.AppDB = {
 };
 
 // Sayfa ilk açıldığında varsayılan verileri localStorage'a kaydet
+if (!localStorage.getItem('db_applications')) {
+    localStorage.setItem('db_applications', JSON.stringify(window.AppDB.applications));
+}
 if (!localStorage.getItem('db_advisors')) {
     localStorage.setItem('db_advisors', JSON.stringify(window.AppDB.advisors));
 }
