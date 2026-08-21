@@ -51,6 +51,23 @@
             }
         }
 
+        function dataURLtoBlob(dataurl) {
+            try {
+                const arr = dataurl.split(',');
+                const mime = arr[0].match(/:(.*?);/)[1];
+                const bstr = atob(arr[1]);
+                let n = bstr.length;
+                const u8arr = new Uint8Array(n);
+                while (n--) {
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
+                return new Blob([u8arr], { type: mime });
+            } catch (e) {
+                console.error('Error converting data URL to Blob:', e);
+                return null;
+            }
+        }
+
         function getFileLinkHtml(doc) {
             if (!doc) return '—';
             if (doc.fileUrl && doc.fileUrl.startsWith('IndexedDB:')) {
@@ -85,8 +102,11 @@
                         <button type="button" class="btn ${activeAdminTab === 'applications' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="applications">
                             Aktif Başvurular
                         </button>
+                        <button type="button" class="btn ${activeAdminTab === 'archive' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="archive">
+                            Arşiv (Reddedilenler)
+                        </button>
                         <button type="button" class="btn ${activeAdminTab === 'trash' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="trash">
-                            Çöp Kutusu (Reddedilenler)
+                            Çöp Kutusu
                         </button>
                         <button type="button" class="btn ${activeAdminTab === 'advisors' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="advisors">
                             Danışman Yönetimi
@@ -122,6 +142,8 @@
 
             if (activeAdminTab === 'applications') {
                 renderActiveApplicationsTab(contentDiv);
+            } else if (activeAdminTab === 'archive') {
+                renderArchiveTab(contentDiv);
             } else if (activeAdminTab === 'trash') {
                 renderTrashTab(contentDiv);
             } else if (activeAdminTab === 'advisors') {
@@ -138,7 +160,7 @@
         // ------------------------------------------------------------------
         function renderActiveApplicationsTab(target) {
             const allApps = getApplications();
-            const activeApps = allApps.filter(a => !a.isTrash);
+            const activeApps = allApps.filter(a => !a.isArchive && !a.isTrash);
 
             target.innerHTML = `
                 <!-- Filtreleme Alanı -->
@@ -334,12 +356,7 @@
                                         else if (doc.status === 'Reddedildi') statusBadgeClass = 'badge-rejected';
                                         else if (doc.status === 'Yüklenmedi') statusBadgeClass = 'optional-badge';
 
-                                        let fileAction = '—';
-                                        if (doc.fileUrl || doc.fileName) {
-                                            fileAction = `<a href="${doc.fileUrl || '#'}" target="_blank" download="${doc.fileName || 'belge'}" class="doc-link">${doc.fileName || 'Dosyayı İncele/İndir'}</a>`;
-                                        } else if (doc.status !== 'Yüklenmedi') {
-                                            fileAction = `<span style="color: var(--text-muted); font-style: italic;">Dosya Bağlantısı Yok</span>`;
-                                        }
+                                        let fileAction = getFileLinkHtml(doc);
 
                                         let actionButtons = '—';
                                         if (doc.status !== 'Yüklenmedi') {
@@ -394,12 +411,7 @@
                                         else if (doc.status === 'Reddedildi') statusBadgeClass = 'badge-rejected';
                                         else if (doc.status === 'Yüklenmedi') statusBadgeClass = 'optional-badge';
 
-                                        let fileAction = '—';
-                                        if (doc.fileUrl || doc.fileName) {
-                                            fileAction = `<a href="${doc.fileUrl || '#'}" target="_blank" download="${doc.fileName || 'belge'}" class="doc-link">${doc.fileName || 'Dosyayı İncele/İndir'}</a>`;
-                                        } else if (doc.status !== 'Yüklenmedi') {
-                                            fileAction = `<span style="color: var(--text-muted); font-style: italic;">Dosya Bağlantısı Yok</span>`;
-                                        }
+                                        let fileAction = getFileLinkHtml(doc);
 
                                         let actionButtons = '—';
                                         if (doc.status !== 'Yüklenmedi') {
@@ -476,11 +488,7 @@
                                 <div style="border-top: 1px solid var(--border); padding-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
                                     <div>
                                         <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); display: block;">Öğrenci Aşı Kartı:</span>
-                                        ${(statuses.vaccineCard && (statuses.vaccineCard.fileUrl || statuses.vaccineCard.fileName)) ? `
-                                            <a href="${statuses.vaccineCard.fileUrl}" target="_blank" download="${statuses.vaccineCard.fileName}" style="font-size: 0.85rem; color: #2563eb; font-weight: 600; text-decoration: underline;">
-                                                <i class="fa-solid fa-file-pdf"></i> ${statuses.vaccineCard.fileName}
-                                            </a>
-                                        ` : `
+                                        ${statuses.vaccineCard ? getFileLinkHtml(statuses.vaccineCard) : `
                                             <span style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">Henüz dosya yüklenmedi</span>
                                         `}
                                     </div>
@@ -810,8 +818,15 @@
                     if (window.FileStorage) {
                         window.FileStorage.getFile(key).then(fileData => {
                             if (fileData && fileData.url) {
+                                let url = fileData.url;
+                                if (url.startsWith('data:')) {
+                                    const blob = dataURLtoBlob(url);
+                                    if (blob) {
+                                        url = URL.createObjectURL(blob);
+                                    }
+                                }
                                 const link = document.createElement('a');
-                                link.href = fileData.url;
+                                link.href = url;
                                 link.download = fileName || 'dosya';
                                 link.target = '_blank';
                                 document.body.appendChild(link);
@@ -830,7 +845,84 @@
         }
 
         // ------------------------------------------------------------------
-        // SEKME 2: ÇÖP KUTUSU (REDDEDİLENLER)
+        // SEKME: ARŞİV (REDDEDİLENLER)
+        // ------------------------------------------------------------------
+        function renderArchiveTab(target) {
+            const allApps = getApplications();
+            const archiveApps = allApps.filter(a => a.isArchive && !a.isTrash);
+
+            if (archiveApps.length === 0) {
+                target.innerHTML = `
+                    <div class="no-records" style="padding: 50px; text-align: center;">
+                        <h4>Arşiv Boş</h4>
+                        <p style="color: var(--text-muted);">Arşivlenmiş (reddedilmiş) başvuru bulunmamaktadır.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let archiveHtml = `
+                <div style="margin-bottom: 16px;">
+                    <h4 style="font-size: 1.1rem; color: var(--primary);">Arşivlenmiş (Reddedilen) Başvurular</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Burada reddedilen staj başvuruları yer alır. Başvuruları aktife geri yükleyebilir veya silebilirsiniz (çöp kutusuna gönderebilirsiniz).</p>
+                </div>
+                <div class="archive-list" style="display: flex; flex-direction: column; gap: 12px;">
+            `;
+
+            archiveApps.forEach(app => {
+                archiveHtml += `
+                    <div style="background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+                        <div>
+                            <h4 style="font-size: 1rem; color: var(--text-main); margin-bottom: 4px;">${app.fullName} (${app.studentNo})</h4>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">
+                                ${app.department} • ${app.courseNameCode} • ${app.institution}
+                            </p>
+                            <div style="font-size: 0.8rem; color: var(--danger); font-weight: 600;">
+                                Red Nedeni: ${app.rejectionReason || 'Belirtilmedi'}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn btn-outline btn-restore-archive" data-student-id="${app.id}">
+                                Aktife Geri Yükle
+                            </button>
+                            <button type="button" class="btn btn-danger btn-move-trash" data-student-id="${app.id}">
+                                Sil (Çöpe At)
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            archiveHtml += `</div>`;
+            target.innerHTML = archiveHtml;
+
+            // Aktife Geri Yükle Dinleyicisi
+            target.querySelectorAll('.btn-restore-archive').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-student-id');
+                    if (window.AppDB && window.AppDB.restoreFromArchive) {
+                        window.AppDB.restoreFromArchive(id);
+                        alert('Başvuru Aktif Başvurulara geri taşındı ve reddedilen belgeler inceleme bekliyor durumuna getirildi.');
+                        renderDashboard();
+                    }
+                });
+            });
+
+            // Sil (Çöpe At) Dinleyicisi
+            target.querySelectorAll('.btn-move-trash').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-student-id');
+                    if (window.AppDB && window.AppDB.moveToTrash) {
+                        window.AppDB.moveToTrash(id);
+                        alert('Başvuru çöp kutusuna gönderildi.');
+                        renderDashboard();
+                    }
+                });
+            });
+        }
+
+        // ------------------------------------------------------------------
+        // SEKME 2: ÇÖP KUTUSU
         // ------------------------------------------------------------------
         function renderTrashTab(target) {
             const allApps = getApplications();
@@ -840,7 +932,7 @@
                 target.innerHTML = `
                     <div class="no-records" style="padding: 50px; text-align: center;">
                         <h4>Çöp Kutusu Boş</h4>
-                        <p style="color: var(--text-muted);">Reddedilen veya çöp kutusuna gönderilen başvuru bulunmamaktadır.</p>
+                        <p style="color: var(--text-muted);">Çöp kutusunda başvuru bulunmamaktadır.</p>
                     </div>
                 `;
                 return;
@@ -848,8 +940,8 @@
 
             let trashListHtml = `
                 <div style="margin-bottom: 16px;">
-                    <h4 style="font-size: 1.1rem; color: var(--danger);">Reddedilen Başvurular ve Çöp Kutusu</h4>
-                    <p style="font-size: 0.85rem; color: var(--text-muted);">Reddedilen başvurular burada saklanır. İstediğiniz zaman geri yükleyebilir veya kalıcı olarak silebilirsiniz.</p>
+                    <h4 style="font-size: 1.1rem; color: var(--danger);">Çöp Kutusu</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Silinen başvurular burada saklanır. Arşive geri yükleyebilir veya kalıcı olarak silebilirsiniz.</p>
                 </div>
                 <div class="trash-list" style="display: flex; flex-direction: column; gap: 12px;">
             `;
@@ -868,7 +960,7 @@
                         </div>
                         <div style="display: flex; gap: 8px;">
                             <button type="button" class="btn btn-outline btn-restore" data-student-id="${app.id}">
-                                Geri Yükle
+                                Arşive Geri Yükle
                             </button>
                             <button type="button" class="btn btn-danger btn-delete-perm" data-student-id="${app.id}">
                                 Kalıcı Sil
@@ -887,7 +979,7 @@
                     const id = btn.getAttribute('data-student-id');
                     if (window.AppDB && window.AppDB.restoreApplication) {
                         window.AppDB.restoreApplication(id);
-                        alert('Başvuru Çöp Kutusundan çıkarıldı ve aktif listeye taşındı.');
+                        alert('Başvuru Çöp Kutusundan çıkarıldı ve Arşive geri taşındı.');
                         renderDashboard();
                     }
                 });

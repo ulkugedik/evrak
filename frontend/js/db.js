@@ -168,17 +168,20 @@ window.AppDB = {
         return false;
     },
 
-    // Toplu Reddetme ve Çöp Kutusuna Gönderme
+    // Toplu Reddetme ve Arşive Gönderme
     bulkRejectApplication: function(studentId, reason) {
         this.getAllApplications();
         const app = this.applications.find(a => a.id === studentId);
         if (app) {
-            app.isTrash = true;
-            app.rejectionReason = reason || 'Belgeler uygun görülmedi.';
+            app.isArchive = true;
+            app.isTrash = false;
+            app.rejectionReason = reason || 'Evraklar staj kurallarına uygun değildir.';
             if (app.documentsStatus) {
                 Object.keys(app.documentsStatus).forEach(k => {
-                    app.documentsStatus[k].status = 'Reddedildi';
-                    app.documentsStatus[k].rejectionReason = reason || 'Belge uygun görülmedi.';
+                    if (app.documentsStatus[k].status !== 'Yüklenmedi') {
+                        app.documentsStatus[k].status = 'Reddedildi';
+                        app.documentsStatus[k].rejectionReason = reason || 'Belge uygun görülmedi.';
+                    }
                 });
             }
             this.saveApplicationsToStorage();
@@ -187,19 +190,48 @@ window.AppDB = {
         return false;
     },
 
-    // Çöp Kutusundan Geri Yükle
+    // Arşivden Çöp Kutusuna Taşı
+    moveToTrash: function(studentId) {
+        this.getAllApplications();
+        const app = this.applications.find(a => a.id === studentId);
+        if (app) {
+            app.isArchive = false;
+            app.isTrash = true;
+            this.saveApplicationsToStorage();
+            return true;
+        }
+        return false;
+    },
+
+    // Arşivden Aktif Başvurulara Geri Yükle
+    restoreFromArchive: function(studentId) {
+        this.getAllApplications();
+        const app = this.applications.find(a => a.id === studentId);
+        if (app) {
+            app.isArchive = false;
+            app.isTrash = false;
+            delete app.rejectionReason;
+            if (app.documentsStatus) {
+                Object.keys(app.documentsStatus).forEach(k => {
+                    if (app.documentsStatus[k].status === 'Reddedildi') {
+                        app.documentsStatus[k].status = 'Bekliyor';
+                        delete app.documentsStatus[k].rejectionReason;
+                    }
+                });
+            }
+            this.saveApplicationsToStorage();
+            return true;
+        }
+        return false;
+    },
+
+    // Çöp Kutusundan Arşive Geri Yükle
     restoreApplication: function(studentId) {
         this.getAllApplications();
         const app = this.applications.find(a => a.id === studentId);
         if (app) {
             app.isTrash = false;
-            delete app.rejectionReason;
-            if (app.documentsStatus) {
-                Object.keys(app.documentsStatus).forEach(k => {
-                    app.documentsStatus[k].status = 'Bekliyor';
-                    delete app.documentsStatus[k].rejectionReason;
-                });
-            }
+            app.isArchive = true;
             this.saveApplicationsToStorage();
             return true;
         }
