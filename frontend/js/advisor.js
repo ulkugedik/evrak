@@ -29,10 +29,14 @@
         };
 
         function getApplications() {
-            if (window.AppDB && window.AppDB.getAllApplications) {
-                return window.AppDB.getAllApplications();
+            try {
+                const stored = localStorage.getItem('db_applications');
+                const apps = stored ? JSON.parse(stored) : (window.AppDB ? window.AppDB.applications : []);
+                return Array.isArray(apps) ? apps : [];
+            } catch (e) {
+                console.error('getApplications error:', e);
+                return [];
             }
-            return JSON.parse(localStorage.getItem('db_applications') || '[]');
         }
 
         function saveApps(apps) {
@@ -41,119 +45,6 @@
                 window.AppDB.saveApplicationsToStorage();
             } else {
                 localStorage.setItem('db_applications', JSON.stringify(apps));
-            }
-        }
-
-        function sendEmailNotification(studentEmail, studentName, studentNo, isApproved, rejectReason) {
-            const emailModal = document.getElementById('emailModal');
-            const sendingState = document.getElementById('email-sending-state');
-            const sentState = document.getElementById('email-sent-state');
-            const previewContent = document.getElementById('emailPreviewContent');
-            const closeBtn = document.getElementById('btn-close-email-modal');
-            const mailtoBtn = document.getElementById('btn-trigger-mailto');
-            
-            if (!emailModal) return;
-
-            const deliveryMethod = localStorage.getItem('settings_email_delivery_method') || 'simulation';
-            const serviceId = localStorage.getItem('settings_emailjs_service_id') || '';
-            const templateId = localStorage.getItem('settings_emailjs_template_id') || '';
-            const publicKey = localStorage.getItem('settings_emailjs_public_key') || '';
-
-            if (deliveryMethod === 'emailjs' && (!serviceId || !templateId || !publicKey)) {
-                alert('E-posta ayarları eksik! Lütfen Sistem & E-posta Ayarları sekmesinden EmailJS anahtarlarını tanımlayınız. Bildirim şimdilik simüle edilecektir.');
-                localStorage.setItem('settings_email_delivery_method', 'simulation');
-                sendEmailNotification(studentEmail, studentName, studentNo, isApproved, rejectReason);
-                return;
-            }
-
-            // Reset modal state
-            sendingState.style.display = 'block';
-            sentState.style.display = 'none';
-            closeBtn.style.display = 'none';
-            mailtoBtn.style.display = 'none';
-            emailModal.classList.add('active');
-
-            const subject = "Balıkesir Üniversitesi Sağlık Bilimleri Uygulama ve Staj Başvurusu Sonucu";
-            let body = "";
-
-            if (isApproved) {
-                body = `Kime: ${studentEmail}\nKonu: ${subject}\n\nSayın ${studentName},\n\n${studentNo} numaralı staj başvurunuz ve ilgili tüm evraklarınız akademik danışmanınız ile sağlık birimimiz tarafından incelenmiş olup ONAYLANMIŞTIR.\n\nStaj işlemlerinizi tamamlamak üzere ilgili kurum ve birimlerle iletişime geçebilirsiniz.\n\nSaygılarımızla,\nBalıkesir Üniversitesi Sağlık Bilimleri Dekanlığı`;
-            } else {
-                body = `Kime: ${studentEmail}\nKonu: ${subject}\n\nSayın ${studentName},\n\n${studentNo} numaralı staj başvurunuz yapılan incelemeler sonucunda staj kurallarına veya evrak eksikliklerine bağlı olarak REDDEDİLMİŞTİR.\n\nRed Gerekçesi: ${rejectReason || 'Evraklar staj kurallarına uygun değildir.'}\n\nLütfen evraklarınızı eksiksiz ve kurallara uygun olarak düzenleyip portal üzerinden tekrar başvuru yapınız.\n\nSaygılarımızla,\nBalıkesir Üniversitesi Sağlık Bilimleri Dekanlığı`;
-            }
-
-            if (deliveryMethod === 'emailjs') {
-                const messageText = isApproved 
-                    ? `Staj başvurunuz ve ilgili tüm evraklarınız akademik danışmanınız ile sağlık birimimiz tarafından incelenmiş olup ONAYLANMIŞTIR.` 
-                    : `Staj başvurunuz yapılan incelemeler sonucunda staj kurallarına veya evrak eksikliklerine bağlı olarak REDDEDİLMİŞTİR. Red Gerekçesi: ${rejectReason || 'Evraklar staj kurallarına uygun değildir.'}`;
-
-                const templateParams = {
-                    to_email: studentEmail,
-                    to_name: studentName,
-                    student_no: studentNo,
-                    status: isApproved ? 'ONAYLANDI' : 'REDDEDİLDİ',
-                    rejection_reason: rejectReason || 'Belirtilmedi',
-                    subject: subject,
-                    message: messageText
-                };
-
-                // Trigger EmailJS
-                emailjs.send(serviceId, templateId, templateParams, publicKey)
-                    .then(response => {
-                        sendingState.style.display = 'none';
-                        sentState.style.display = 'block';
-                        previewContent.innerHTML = `<span style="color:#16a34a; font-weight:bold;">[EmailJS Gerçek Mail İletildi]</span>\n\n` + body;
-                        closeBtn.style.display = 'block';
-                        
-                        closeBtn.onclick = () => {
-                            emailModal.classList.remove('active');
-                        };
-                    })
-                    .catch(err => {
-                        sendingState.style.display = 'none';
-                        sentState.style.display = 'block';
-                        previewContent.innerHTML = `<span style="color:#dc2626; font-weight:bold;">[Hata: Mail Gönderilemedi!]</span>\nDetay: ${JSON.stringify(err)}\n\n` + body;
-                        closeBtn.style.display = 'block';
-                        mailtoBtn.style.display = 'flex';
-                        
-                        closeBtn.onclick = () => {
-                            emailModal.classList.remove('active');
-                        };
-
-                        mailtoBtn.onclick = () => {
-                            const mailtoSubject = encodeURIComponent(subject);
-                            const mailtoBody = encodeURIComponent(body.replace(`Kime: ${studentEmail}\nKonu: ${subject}\n\n`, ''));
-                            window.location.href = `mailto:${studentEmail}?subject=${mailtoSubject}&body=${mailtoBody}`;
-                        };
-                    });
-            } else {
-                // Simulation & Mailto Modu
-                setTimeout(() => {
-                    sendingState.style.display = 'none';
-                    sentState.style.display = 'block';
-                    previewContent.textContent = body;
-                    closeBtn.style.display = 'block';
-                    mailtoBtn.style.display = 'flex';
-
-                    // Bind close button
-                    closeBtn.onclick = () => {
-                        emailModal.classList.remove('active');
-                    };
-
-                    // Bind mailto button
-                    mailtoBtn.onclick = () => {
-                        const mailtoSubject = encodeURIComponent(subject);
-                        const mailtoBody = encodeURIComponent(body.replace(`Kime: ${studentEmail}\nKonu: ${subject}\n\n`, ''));
-                        window.location.href = `mailto:${studentEmail}?subject=${mailtoSubject}&body=${mailtoBody}`;
-                    };
-
-                    // Auto trigger mailto if mode is mailto
-                    if (deliveryMethod === 'mailto') {
-                        const mailtoSubject = encodeURIComponent(subject);
-                        const mailtoBody = encodeURIComponent(body.replace(`Kime: ${studentEmail}\nKonu: ${subject}\n\n`, ''));
-                        window.location.href = `mailto:${studentEmail}?subject=${mailtoSubject}&body=${mailtoBody}`;
-                    }
-                }, 1200);
             }
         }
 
@@ -198,9 +89,6 @@
                         <button type="button" class="btn ${activeAdminTab === 'instructors' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="instructors">
                             Öğretim Elemanı Yönetimi
                         </button>
-                        <button type="button" class="btn ${activeAdminTab === 'settings' ? 'btn-primary' : 'btn-secondary'} admin-nav-btn" data-tab="settings">
-                            Sistem & E-posta Ayarları
-                        </button>
                     </div>
                 </div>
 
@@ -227,8 +115,6 @@
                 renderCoursesTab(contentDiv);
             } else if (activeAdminTab === 'instructors') {
                 renderInstructorsTab(contentDiv);
-            } else if (activeAdminTab === 'settings') {
-                renderSettingsTab(contentDiv);
             }
         }
 
@@ -251,9 +137,14 @@
                                 <option value="">-- Tüm Bölümler --</option>
                                 <option value="Hemşirelik" ${filterDepartment === 'Hemşirelik' ? 'selected' : ''}>Hemşirelik</option>
                                 <option value="Ebelik" ${filterDepartment === 'Ebelik' ? 'selected' : ''}>Ebelik</option>
-                                <option value="Fizyoterapi ve Rehabilitasyon" ${filterDepartment === 'Fizyoterapi ve Rehabilitasyon' ? 'selected' : ''}>Fizyoterapi</option>
-                                <option value="Beslenme ve Diyetetik" ${filterDepartment === 'Beslenme ve Diyetetik' ? 'selected' : ''}>Beslenme & Diyetetik</option>
+                                <option value="Fizyoterapi ve Rehabilitasyon" ${filterDepartment === 'Fizyoterapi ve Rehabilitasyon' ? 'selected' : ''}>Fizyoterapi ve Rehabilitasyon</option>
+                                <option value="Beslenme ve Diyetetik" ${filterDepartment === 'Beslenme ve Diyetetik' ? 'selected' : ''}>Beslenme ve Diyetetik</option>
                                 <option value="Tıp Fakültesi" ${filterDepartment === 'Tıp Fakültesi' ? 'selected' : ''}>Tıp Fakültesi</option>
+                                <option value="Gerontoloji" ${filterDepartment === 'Gerontoloji' ? 'selected' : ''}>Gerontoloji</option>
+                                <option value="İlk ve Acil Yardım" ${filterDepartment === 'İlk ve Acil Yardım' ? 'selected' : ''}>İlk ve Acil Yardım</option>
+                                <option value="Dijital Sağlık Sistemleri Teknikerliği" ${filterDepartment === 'Dijital Sağlık Sistemleri Teknikerliği' ? 'selected' : ''}>Dijital Sağlık Sistemleri Teknikerliği</option>
+                                <option value="Tıbbi Dokümantasyon ve Sekreterlik" ${filterDepartment === 'Tıbbi Dokümantasyon ve Sekreterlik' ? 'selected' : ''}>Tıbbi Dokümantasyon ve Sekreterlik</option>
+                                <option value="Laborant ve Veteriner Sağlık" ${filterDepartment === 'Laborant ve Veteriner Sağlık' ? 'selected' : ''}>Laborant ve Veteriner Sağlık</option>
                             </select>
                         </div>
                         <div>
@@ -263,6 +154,9 @@
                                 <option value="2. Sınıf" ${filterClass === '2. Sınıf' ? 'selected' : ''}>2. Sınıf</option>
                                 <option value="3. Sınıf" ${filterClass === '3. Sınıf' ? 'selected' : ''}>3. Sınıf</option>
                                 <option value="4. Sınıf" ${filterClass === '4. Sınıf' ? 'selected' : ''}>4. Sınıf</option>
+                                <option value="5. Sınıf" ${filterClass === '5. Sınıf' ? 'selected' : ''}>5. Sınıf</option>
+                                <option value="6. Sınıf" ${filterClass === '6. Sınıf' ? 'selected' : ''}>6. Sınıf</option>
+                                <option value="Yüksek Lisans" ${filterClass === 'Yüksek Lisans' ? 'selected' : ''}>Yüksek Lisans</option>
                             </select>
                         </div>
                         <div>
@@ -302,9 +196,13 @@
             const listContainer = document.getElementById('adv-student-list');
             if (!listContainer) return;
 
-            const filteredApps = activeApps.filter(app => {
-                const nameMatch = app.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                  app.studentNo.includes(searchQuery);
+            const filteredApps = (activeApps || []).filter(app => {
+                if (!app) return false;
+                const fullName = String(app.fullName || '').toLowerCase();
+                const studentNo = String(app.studentNo || '');
+                const q = (searchQuery || '').toLowerCase().trim();
+
+                const nameMatch = !q || fullName.includes(q) || studentNo.includes(q);
                 const deptMatch = !filterDepartment || app.department === filterDepartment;
                 const classMatch = !filterClass || app.studentClass === filterClass;
 
