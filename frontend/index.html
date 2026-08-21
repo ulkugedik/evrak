@@ -3,35 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Öğrenci Uygulama Evrakları Portalı (Geliştirici 1 - Frontend)</title>
-    <!-- Google Fonts & FontAwesome Icons -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Balıkesir Üniversitesi Sağlık Bilimleri Uygulama ve Staj Portalı</title>
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=2.0">
 </head>
 <body>
     <div class="app-container">
-        <!-- Main Header & Role Selector -->
+        <!-- Main Header -->
         <header class="main-header">
             <div class="header-brand">
-                <div class="brand-icon">
-                    <i class="fa-solid fa-graduation-cap"></i>
-                </div>
                 <div>
-                    <h1>Öğrenci Uygulama Evrakları Portalı</h1>
-                    <p>Geliştirici 1: Öğrenci Portalı & Belge Yükleme Arayüzü</p>
+                    <h1>Balıkesir Üniversitesi Sağlık Bilimleri Uygulama ve Staj Portalı</h1>
                 </div>
             </div>
             <div class="header-actions">
-                <div class="role-selector">
-                    <span class="role-badge active" title="Geliştirici 1 Sorumluluk Alanı"><i class="fa-solid fa-user-graduate"></i> Öğrenci Portalı</span>
-                    <span class="role-badge disabled" title="Geliştirici 3 Sorumluluk Alanı"><i class="fa-solid fa-user-tie"></i> Danışman (G3)</span>
-                    <span class="role-badge disabled" title="Geliştirici 3 Sorumluluk Alanı"><i class="fa-solid fa-user-doctor"></i> Sağlık (G3)</span>
-                </div>
-                <button type="button" class="btn btn-outline" id="btnDraftSave">
-                    <i class="fa-solid fa-floppy-disk"></i> Taslağı Kaydet
+                <button type="button" class="btn btn-primary" id="btn-login-trigger">
+                    Yetkili Girişi
+                </button>
+                <button type="button" class="btn btn-danger hidden" id="btn-logout">
+                    Çıkış Yap
                 </button>
             </div>
         </header>
@@ -47,16 +43,19 @@
             </div>
         </div>
 
-        <!-- Student Portal Navigation Tabs (Geliştirici 1 Scope) -->
+        <!-- Student Navigation Tabs -->
         <nav class="nav-tabs" role="tablist">
             <button type="button" class="tab-btn active" data-tab="tab-student" role="tab">
-                <i class="fa-solid fa-id-card"></i> 1. Öğrenci Temel Bilgileri
+                1. Öğrenci Temel Bilgileri
             </button>
             <button type="button" class="tab-btn" data-tab="tab-application" role="tab">
-                <i class="fa-solid fa-calendar-check"></i> 2. Dönem & Uygulama Bilgileri
+                2. Dönem & Uygulama Bilgileri
             </button>
             <button type="button" class="tab-btn" data-tab="tab-documents" role="tab">
-                <i class="fa-solid fa-file-arrow-up"></i> 3. Uygulama Belgeleri (7 Belge)
+                3. Uygulama Belgeleri (7 Belge)
+            </button>
+            <button type="button" class="tab-btn" data-tab="tab-health" role="tab">
+                4. Sağlık & Aşı Takip
             </button>
         </nav>
 
@@ -66,7 +65,7 @@
             <!-- TAB 1: ÖĞRENCİ TEMEL BİLGİLERİ -->
             <section class="tab-pane active" id="tab-student">
                 <div class="section-header">
-                    <h2><i class="fa-solid fa-user"></i> Öğrenci Temel Bilgileri</h2>
+                    <h2>Öğrenci Temel Bilgileri</h2>
                     <p>Sistem ve kişisel kimlik bilgilerinizi eksiksiz doldurunuz.</p>
                 </div>
 
@@ -74,33 +73,30 @@
                     <div class="form-group">
                         <label for="studentNo" class="required">Öğrenci Numarası</label>
                         <div class="input-wrapper">
-                            <i class="fa-solid fa-hashtag input-icon"></i>
-                            <input type="text" id="studentNo" name="studentNo" placeholder="Örn: 2024105001" required>
+                            <input type="text" id="studentNo" name="studentNo" inputmode="numeric" maxlength="12" placeholder="Örn: 2024105001" required>
                         </div>
-                        <small class="hint">Sistemden otomatik aktarılır veya manuel girilir.</small>
+                        <small class="hint">Sadece rakam girilebilir (Maksimum 12 hane).</small>
                     </div>
 
                     <div class="form-group">
                         <label for="tcNo">T.C. Kimlik Numarası</label>
                         <div class="input-wrapper">
-                            <i class="fa-solid fa-id-card input-icon"></i>
-                            <input type="text" id="tcNo" name="tcNo" maxlength="11" placeholder="11 Haneli T.C. Kimlik No">
+                            <input type="text" id="tcNo" name="tcNo" inputmode="numeric" maxlength="11" placeholder="XXXXXXXXXXX (11 Rakam)">
                         </div>
-                        <small class="hint">Gerektiğinde kurum onayları için istenir.</small>
+                        <small class="hint">Sadece 11 haneli rakam girilebilir, harf kabul edilmez.</small>
                     </div>
 
                     <div class="form-group full-width">
                         <label for="fullName" class="required">Adı Soyadı</label>
                         <div class="input-wrapper">
-                            <i class="fa-solid fa-user-tag input-icon"></i>
                             <input type="text" id="fullName" name="fullName" placeholder="Adınız ve Soyadınız" required>
                         </div>
+                        <small class="hint">Sadece harf ve boşluk girilebilir.</small>
                     </div>
 
                     <div class="form-group">
                         <label for="department" class="required">Bölüm</label>
                         <div class="input-wrapper">
-                            <i class="fa-solid fa-building-columns input-icon"></i>
                             <select id="department" name="department" required>
                                 <option value="">-- Bölüm Seçiniz --</option>
                                 <option value="Hemşirelik">Hemşirelik</option>
@@ -108,9 +104,11 @@
                                 <option value="Fizyoterapi ve Rehabilitasyon">Fizyoterapi ve Rehabilitasyon</option>
                                 <option value="Beslenme ve Diyetetik">Beslenme ve Diyetetik</option>
                                 <option value="Tıp Fakültesi">Tıp Fakültesi</option>
-                                <option value="Diş Hekimliği">Diş Hekimliği</option>
+                                <option value="Gerontoloji">Gerontoloji</option>
                                 <option value="İlk ve Acil Yardım">İlk ve Acil Yardım</option>
-                                <option value="Sağlık Yönetimi">Sağlık Yönetimi</option>
+                                <option value="Dijital Sağlık Sistemleri Teknikerliği">Dijital Sağlık Sistemleri Teknikerliği</option>
+                                <option value="Tıbbi Dokümantasyon ve Sekreterlik">Tıbbi Dokümantasyon ve Sekreterlik</option>
+                                <option value="Laborant ve Veteriner Sağlık">Laborant ve Veteriner Sağlık</option>
                             </select>
                         </div>
                     </div>
@@ -118,13 +116,14 @@
                     <div class="form-group">
                         <label for="studentClass" class="required">Sınıf</label>
                         <div class="input-wrapper">
-                            <i class="fa-solid fa-graduation-cap input-icon"></i>
                             <select id="studentClass" name="studentClass" required>
                                 <option value="">-- Sınıf Seçiniz --</option>
                                 <option value="1. Sınıf">1. Sınıf</option>
                                 <option value="2. Sınıf">2. Sınıf</option>
                                 <option value="3. Sınıf">3. Sınıf</option>
                                 <option value="4. Sınıf">4. Sınıf</option>
+                                <option value="5. Sınıf">5. Sınıf</option>
+                                <option value="6. Sınıf">6. Sınıf</option>
                                 <option value="Yüksek Lisans">Yüksek Lisans</option>
                             </select>
                         </div>
@@ -133,30 +132,24 @@
                     <div class="form-group">
                         <label for="phone" class="required">Telefon Numarası</label>
                         <div class="input-wrapper">
-                            <i class="fa-solid fa-phone input-icon"></i>
-                            <input type="tel" id="phone" name="phone" placeholder="05XX XXX XX XX" required>
+                            <input type="tel" id="phone" name="phone" inputmode="numeric" maxlength="15" placeholder="05XX XXX XX XX" required>
                         </div>
+                        <small class="hint">Format: 05XX XXX XX XX (Sadece rakam girilebilir).</small>
                     </div>
 
                     <div class="form-group">
                         <label for="email" class="required">Kurumsal E-posta</label>
                         <div class="input-wrapper">
-                            <i class="fa-solid fa-envelope input-icon"></i>
                             <input type="email" id="email" name="email" placeholder="ogrenci@ogrenci.edu.tr" required>
                         </div>
+                        <small class="hint">Örn: ad.soyad@ogrenci.edu.tr</small>
                     </div>
 
                     <div class="form-group full-width">
                         <label for="academicAdvisor" class="required">Akademik Danışman</label>
                         <div class="input-wrapper">
-                            <i class="fa-solid fa-user-tie input-icon"></i>
                             <select id="academicAdvisor" name="academicAdvisor" required>
                                 <option value="">-- Akademik Danışmanınızı Seçiniz --</option>
-                                <option value="Prof. Dr. Ahmet Yılmaz">Prof. Dr. Ahmet Yılmaz</option>
-                                <option value="Doç. Dr. Ayşe Kaya">Doç. Dr. Ayşe Kaya</option>
-                                <option value="Dr. Öğr. Üyesi Mehmet Demir">Dr. Öğr. Üyesi Mehmet Demir</option>
-                                <option value="Dr. Öğr. Üyesi Zeynep Şahin">Dr. Öğr. Üyesi Zeynep Şahin</option>
-                                <option value="Öğr. Gör. Elif Arslan">Öğr. Gör. Elif Arslan</option>
                             </select>
                         </div>
                     </div>
@@ -165,7 +158,7 @@
                 <div class="tab-footer">
                     <div></div>
                     <button type="button" class="btn btn-primary btn-next" data-target="tab-application">
-                        Sonraki Adım: Dönem & Uygulama Bilgileri <i class="fa-solid fa-arrow-right"></i>
+                        Sonraki Adım: Dönem & Uygulama Bilgileri &rarr;
                     </button>
                 </div>
             </section>
@@ -173,7 +166,7 @@
             <!-- TAB 2: DÖNEM VE UYGULAMA BİLGİLERİ -->
             <section class="tab-pane" id="tab-application">
                 <div class="section-header">
-                    <h2><i class="fa-solid fa-clipboard-list"></i> Dönem ve Uygulama Bilgileri</h2>
+                    <h2>Dönem ve Uygulama Bilgileri</h2>
                     <p>Staj / Saha uygulaması yapacağınız dönem, ders ve kurum bilgilerini seçiniz.</p>
                 </div>
 
@@ -181,7 +174,6 @@
                     <div class="form-group">
                         <label for="academicYear" class="required">Akademik Yıl</label>
                         <div class="input-wrapper">
-                            <i class="fa-solid fa-calendar input-icon"></i>
                             <select id="academicYear" name="academicYear" required>
                                 <option value="2026-2027" selected>2026-2027</option>
                                 <option value="2025-2026">2025-2026</option>
@@ -193,7 +185,6 @@
                     <div class="form-group">
                         <label for="term" class="required">Dönem</label>
                         <div class="input-wrapper">
-                            <i class="fa-solid fa-cloud-sun input-icon"></i>
                             <select id="term" name="term" required>
                                 <option value="">-- Dönem Seçiniz --</option>
                                 <option value="Güz">Güz Dönemi</option>
@@ -206,14 +197,8 @@
                     <div class="form-group full-width">
                         <label for="courseNameCode" class="required">Dersin Adı / Kodu</label>
                         <div class="input-wrapper">
-                            <i class="fa-solid fa-book-open input-icon"></i>
                             <select id="courseNameCode" name="courseNameCode" required>
-                                <option value="">-- Uygulama Dersini Seçiniz --</option>
-                                <option value="HEM301 - Klinik Hemşirelik Uygulaması I">HEM301 - Klinik Hemşirelik Uygulaması I</option>
-                                <option value="HEM402 - İntörn Hemşirelik Sahası">HEM402 - İntörn Hemşirelik Sahası</option>
-                                <option value="EBE204 - Doğum Sahası Uygulaması">EBE204 - Doğum Sahası Uygulaması</option>
-                                <option value="FTR401 - Klinik Fizyoterapi Stajı">FTR401 - Klinik Fizyoterapi Stajı</option>
-                                <option value="TIP501 - İç Hastalıkları Stajı">TIP501 - İç Hastalıkları Stajı</option>
+                                <option value="">-- Uygulama Dersini Seçiniz (Önce Bölüm ve Dönem Seçin) --</option>
                             </select>
                         </div>
                     </div>
@@ -221,7 +206,6 @@
                     <div class="form-group">
                         <label for="institution" class="required">Uygulama Kurumu</label>
                         <div class="input-wrapper">
-                            <i class="fa-solid fa-hospital input-icon"></i>
                             <select id="institution" name="institution" required>
                                 <option value="">-- Uygulama Yapılacak Kurum --</option>
                                 <option value="Üniversite Eğitim ve Araştırma Hastanesi">Üniversite Eğitim ve Araştırma Hastanesi</option>
@@ -237,7 +221,6 @@
                     <div class="form-group">
                         <label for="unitName">Uygulama Birimi / Poliklinik</label>
                         <div class="input-wrapper">
-                            <i class="fa-solid fa-door-open input-icon"></i>
                             <input type="text" id="unitName" name="unitName" placeholder="Örn: Acil Servis, Yoğun Bakım, Pediatri">
                         </div>
                         <small class="hint">Serbest metin veya spesifik birim adı (Gerektiğinde).</small>
@@ -246,7 +229,6 @@
                     <div class="form-group">
                         <label for="applicationDays" class="required">Uygulama Günü / Günleri</label>
                         <div class="input-wrapper">
-                            <i class="fa-solid fa-calendar-days input-icon"></i>
                             <input type="text" id="applicationDays" name="applicationDays" placeholder="Örn: Pazartesi, Çarşamba" required>
                         </div>
                     </div>
@@ -254,13 +236,8 @@
                     <div class="form-group">
                         <label for="responsibleInstructor" class="required">Sorumlu Öğretim Elemanı</label>
                         <div class="input-wrapper">
-                            <i class="fa-solid fa-chalkboard-user input-icon"></i>
                             <select id="responsibleInstructor" name="responsibleInstructor" required>
                                 <option value="">-- Öğretim Elemanı Seçiniz --</option>
-                                <option value="Prof. Dr. Fatma Yıldız">Prof. Dr. Fatma Yıldız</option>
-                                <option value="Doç. Dr. Murat Can">Doç. Dr. Murat Can</option>
-                                <option value="Dr. Öğr. Üyesi Sevgi Kılıç">Dr. Öğr. Üyesi Sevgi Kılıç</option>
-                                <option value="Arş. Gör. Burak Çelik">Arş. Gör. Burak Çelik</option>
                             </select>
                         </div>
                     </div>
@@ -268,10 +245,10 @@
 
                 <div class="tab-footer">
                     <button type="button" class="btn btn-secondary btn-prev" data-target="tab-student">
-                        <i class="fa-solid fa-arrow-left"></i> Önceki Adım
+                        &larr; Önceki Adım
                     </button>
                     <button type="button" class="btn btn-primary btn-next" data-target="tab-documents">
-                        Sonraki Adım: Uygulama Belgeleri <i class="fa-solid fa-arrow-right"></i>
+                        Sonraki Adım: Uygulama Belgeleri &rarr;
                     </button>
                 </div>
             </section>
@@ -279,17 +256,20 @@
             <!-- TAB 3: ÖĞRENCİ TARAFINDAN YÜKLENECEK UYGULAMA BELGELERİ (7 BELGE) -->
             <section class="tab-pane" id="tab-documents">
                 <div class="section-header">
-                    <h2><i class="fa-solid fa-folder-open"></i> Öğrenci Tarafından Yüklenecek Uygulama Belgeleri</h2>
+                    <h2>Öğrenci Tarafından Yüklenecek Uygulama Belgeleri</h2>
                     <p>İstenen 7 adet uygulama belgesini PDF veya JPG formatında yükleyiniz ve tarih bilgilerini doldurunuz.</p>
                 </div>
 
-                <div class="documents-list">
-                    
+                <!-- Genel & İdari Belgeler Bölümü -->
+                <div class="doc-section-header" style="margin-top: 10px; margin-bottom: 14px; padding-bottom: 6px; border-bottom: 2px solid var(--primary); font-weight: 700; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-folder-open" style="color: var(--primary);"></i> Genel & İdari Belgeler
+                </div>
+                <div class="documents-list" style="margin-bottom: 30px;">
                     <!-- Belge 1 -->
                     <div class="doc-card" id="docCard1">
                         <div class="doc-badge required-badge">Kurum Kuralına Göre</div>
                         <div class="doc-info">
-                            <h3><i class="fa-solid fa-shield-halved"></i> 1. 16 Saatlik İş Sağlığı ve Güvenliği Eğitimi Belgesi</h3>
+                            <h3>1. 16 Saatlik İş Sağlığı ve Güvenliği Eğitimi Belgesi</h3>
                             <p class="doc-desc">İSG eğitimi sertifikası (PDF / JPG formatında).</p>
                         </div>
                         <div class="doc-fields">
@@ -301,18 +281,63 @@
                                 <label for="doc1_file">Dosya Yükle (PDF / JPG)</label>
                                 <div class="file-upload-box">
                                     <input type="file" id="doc1_file" name="doc1_file" accept=".pdf,.jpg,.jpeg">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i>
                                     <span class="file-name-display">Dosya Seçiniz veya Sürükleyiniz</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Belge 3 -->
+                    <div class="doc-card" id="docCard3">
+                        <div class="doc-badge optional-badge">İl Sağlık Müdürlüğü & Bağlı Kuruluşlar</div>
+                        <div class="doc-info">
+                            <h3>3. Gizlilik Sözleşmesi</h3>
+                            <p class="doc-desc">Elektronik sistemde tek dosya yüklenir; fiziksel teslim adedi not girilebilir.</p>
+                        </div>
+                        <div class="doc-fields">
+                            <div class="form-group">
+                                <label for="doc3_physicalCount">Fiziksel Teslim Adedi Notu</label>
+                                <input type="number" id="doc3_physicalCount" name="doc3_physicalCount" min="0" placeholder="Örn: 1">
+                            </div>
+                            <div class="form-group">
+                                <label for="doc3_file">Gizlilik Sözleşmesi Dosyası (PDF)</label>
+                                <div class="file-upload-box">
+                                    <input type="file" id="doc3_file" name="doc3_file" accept=".pdf">
+                                    <span class="file-name-display">PDF Seçiniz</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Belge 4 -->
+                    <div class="doc-card" id="docCard4">
+                        <div class="doc-badge optional-badge">Sadece ASM Uygulamalarında</div>
+                        <div class="doc-info">
+                            <h3>4. Kimlik Fotokopisi</h3>
+                            <p class="doc-desc">Sadece Aile Sağlığı Merkezi (ASM) uygulamalarında zorunludur.</p>
+                        </div>
+                        <div class="doc-fields">
+                            <div class="form-group full-width">
+                                <label for="doc4_file">Kimlik Fotokopisi Yükle (PDF / JPG)</label>
+                                <div class="file-upload-box">
+                                    <input type="file" id="doc4_file" name="doc4_file" accept=".pdf,.jpg,.jpeg">
+                                    <span class="file-name-display">Dosya Seçiniz</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sağlık & Tetkik Belgeleri Bölümü -->
+                <div class="doc-section-header" style="margin-top: 10px; margin-bottom: 14px; padding-bottom: 6px; border-bottom: 2px solid var(--danger); font-weight: 700; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-file-medical" style="color: var(--danger);"></i> Sağlık & Tetkik Belgeleri
+                </div>
+                <div class="documents-list">
                     <!-- Belge 2 -->
                     <div class="doc-card" id="docCard2">
                         <div class="doc-badge required-badge">Kurum Kuralına Göre</div>
                         <div class="doc-info">
-                            <h3><i class="fa-solid fa-notes-medical"></i> 2. İşe Giriş / Periyodik Muayene Formu</h3>
+                            <h3>2. İşe Giriş / Periyodik Muayene Formu</h3>
                             <p class="doc-desc">Muayene tarihi girildiğinde 1 yıllık geçerlilik süresi otomatik hesaplanır.</p>
                         </div>
                         <div class="doc-fields">
@@ -328,49 +353,6 @@
                                 <label for="doc2_file">Dosya Yükle (PDF / JPG)</label>
                                 <div class="file-upload-box">
                                     <input type="file" id="doc2_file" name="doc2_file" accept=".pdf,.jpg,.jpeg">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                                    <span class="file-name-display">Dosya Seçiniz</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Belge 3 -->
-                    <div class="doc-card" id="docCard3">
-                        <div class="doc-badge optional-badge">İl Sağlık Müdürlüğü & Bağlı Kuruluşlar</div>
-                        <div class="doc-info">
-                            <h3><i class="fa-solid fa-file-contract"></i> 3. Gizlilik Sözleşmesi</h3>
-                            <p class="doc-desc">Elektronik sistemde tek dosya yüklenir; fiziksel teslim adedi not girilebilir.</p>
-                        </div>
-                        <div class="doc-fields">
-                            <div class="form-group">
-                                <label for="doc3_physicalCount">Fiziksel Teslim Adedi Notu</label>
-                                <input type="number" id="doc3_physicalCount" name="doc3_physicalCount" min="0" placeholder="Örn: 1">
-                            </div>
-                            <div class="form-group">
-                                <label for="doc3_file">Gizlilik Sözleşmesi Dosyası (PDF)</label>
-                                <div class="file-upload-box">
-                                    <input type="file" id="doc3_file" name="doc3_file" accept=".pdf">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                                    <span class="file-name-display">PDF Seçiniz</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Belge 4 -->
-                    <div class="doc-card" id="docCard4">
-                        <div class="doc-badge optional-badge">Sadece ASM Uygulamaları</div>
-                        <div class="doc-info">
-                            <h3><i class="fa-solid fa-address-card"></i> 4. Kimlik Fotokopisi</h3>
-                            <p class="doc-desc">Sadece Aile Sağlığı Merkezi (ASM) uygulamalarında zorunludur. (Yetkili erişimi kısıtlıdır)</p>
-                        </div>
-                        <div class="doc-fields">
-                            <div class="form-group full-width">
-                                <label for="doc4_file">Kimlik Fotokopisi Yükle (PDF / JPG)</label>
-                                <div class="file-upload-box">
-                                    <input type="file" id="doc4_file" name="doc4_file" accept=".pdf,.jpg,.jpeg">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i>
                                     <span class="file-name-display">Dosya Seçiniz</span>
                                 </div>
                             </div>
@@ -381,7 +363,7 @@
                     <div class="doc-card" id="docCard5">
                         <div class="doc-badge optional-badge">İlgili Uygulama Yerlerinde</div>
                         <div class="doc-info">
-                            <h3><i class="fa-solid fa-vial"></i> 5. Hemogram Tetkik Belgesi</h3>
+                            <h3>5. Hemogram Tetkik Belgesi</h3>
                             <p class="doc-desc">Kan tam sayım tetkik raporu.</p>
                         </div>
                         <div class="doc-fields">
@@ -393,7 +375,6 @@
                                 <label for="doc5_file">Hemogram Belgesi Yükle (PDF / JPG)</label>
                                 <div class="file-upload-box">
                                     <input type="file" id="doc5_file" name="doc5_file" accept=".pdf,.jpg,.jpeg">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i>
                                     <span class="file-name-display">Dosya Seçiniz</span>
                                 </div>
                             </div>
@@ -404,7 +385,7 @@
                     <div class="doc-card" id="docCard6">
                         <div class="doc-badge optional-badge">İlgili Uygulama Yerlerinde</div>
                         <div class="doc-info">
-                            <h3><i class="fa-solid fa-vials"></i> 6. ELISA Tetkik Belgesi</h3>
+                            <h3>6. ELISA Tetkik Belgesi</h3>
                             <p class="doc-desc">Seroloji / ELISA test sonuç belgesi.</p>
                         </div>
                         <div class="doc-fields">
@@ -416,18 +397,16 @@
                                 <label for="doc6_file">ELISA Belgesi Yükle (PDF / JPG)</label>
                                 <div class="file-upload-box">
                                     <input type="file" id="doc6_file" name="doc6_file" accept=".pdf,.jpg,.jpeg">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i>
                                     <span class="file-name-display">Dosya Seçiniz</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                     <!-- Belge 7 -->
                     <div class="doc-card" id="docCard7">
                         <div class="doc-badge optional-badge">İlgili Uygulama Yerlerinde</div>
                         <div class="doc-info">
-                            <h3><i class="fa-solid fa-x-ray"></i> 7. Akciğer Grafisi / Raporu</h3>
+                            <h3>7. Akciğer Grafisi / Raporu</h3>
                             <p class="doc-desc">Akciğer mikrofilm / röntgen raporu.</p>
                         </div>
                         <div class="doc-fields">
@@ -439,42 +418,102 @@
                                 <label for="doc7_file">Grafi / Rapor Yükle (PDF / JPG)</label>
                                 <div class="file-upload-box">
                                     <input type="file" id="doc7_file" name="doc7_file" accept=".pdf,.jpg,.jpeg">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i>
                                     <span class="file-name-display">Dosya Seçiniz</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                 </div>
 
                 <div class="tab-footer">
                     <button type="button" class="btn btn-secondary btn-prev" data-target="tab-application">
-                        <i class="fa-solid fa-arrow-left"></i> Önceki Adım
+                        &larr; Önceki Adım
+                    </button>
+                    <button type="button" class="btn btn-primary btn-next" data-target="tab-health">
+                        Sonraki Adım &rarr;
+                    </button>
+                </div>
+            </section>
+
+            <!-- TAB 4: SAĞLIK & AŞILAMA TAKİP -->
+            <section class="tab-pane" id="tab-health">
+                <div class="section-header">
+                    <h2>Sağlık & Aşılama Takip</h2>
+                    <p>Hepatit B tetkik bilgilerinizi ve varsa aşı kartınızı bu alandan sisteme yükleyiniz.</p>
+                </div>
+
+                <div class="form-grid">
+                    <!-- Tetkik Yapıldı mı -->
+                    <div class="form-group">
+                        <label for="hepatitisTested" class="required">Hepatit B Tetkiki Yapıldı mı?</label>
+                        <div class="input-wrapper">
+                            <select id="hepatitisTested" name="hepatitisTested" required>
+                                <option value="">-- Seçiniz --</option>
+                                <option value="Evet">Evet, Yapıldı</option>
+                                <option value="Hayır">Hayır, Yapılmadı</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Tetkik Tarihi -->
+                    <div class="form-group" id="group-hep-date" style="display: none;">
+                        <label for="hepatitisTestDate" class="required">Tetkik Tarihi</label>
+                        <div class="input-wrapper">
+                            <input type="date" id="hepatitisTestDate" name="hepatitisTestDate">
+                        </div>
+                    </div>
+
+                    <!-- Tetkik Belgesi -->
+                    <div class="form-group full-width" id="group-hep-file" style="display: none;">
+                        <label for="hepatitisTestFile" class="required">Hepatit B Tetkik Belgesi / Raporu Yükle</label>
+                        <div class="file-upload-box">
+                            <input type="file" id="hepatitisTestFile" name="hepatitisTestFile" accept=".pdf,.jpg,.jpeg">
+                            <span class="file-name-display">Tetkik Sonuç Belgesi Seçiniz (PDF/JPG)</span>
+                        </div>
+                    </div>
+
+                    <!-- Aşı Kartı Belgesi (Opsiyonel / Aşılama sonrası) -->
+                    <div class="form-group full-width" style="margin-top: 16px; border-top: 1px dashed var(--border); padding-top: 20px;">
+                        <label for="vaccineCardFile">Güncel Aşı Kartı / Belgesi Yükle (Aşılama Yapıldıysa)</label>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">
+                            Eğer yetkililer tarafından aşı listesine dahil edildiyseniz ve aşılarınız yapıldıysa, aşı kartınızı bu alandan yükleyebilirsiniz.
+                        </p>
+                        <div class="file-upload-box">
+                            <input type="file" id="vaccineCardFile" name="vaccineCardFile" accept=".pdf,.jpg,.jpeg">
+                            <span class="file-name-display">Güncel Aşı Kartı Dosyası Seçiniz (PDF/JPG)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-footer">
+                    <button type="button" class="btn btn-secondary btn-prev" data-target="tab-documents">
+                        &larr; Önceki Adım
                     </button>
                     <button type="submit" class="btn btn-success btn-lg" id="btnSubmitForm">
-                        <i class="fa-solid fa-paper-plane"></i> Belgeleri Tamamla ve Gönder
+                        Belgeleri Tamamla ve Gönder
                     </button>
                 </div>
             </section>
 
         </form>
+
+        <!-- Authorized Dashboards Container -->
+        <div id="dashboard-container" class="hidden"></div>
     </div>
 
     <!-- Submission Summary Modal -->
     <div class="modal-overlay" id="successModal">
-        <div class="modal-card">
+        <div class="modal-card print-card">
             <div class="modal-header">
-                <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
-                <h2>Başvuru ve Evrak Kaydı Başarılı!</h2>
-                <p>Geliştirici 1 - Öğrenci uygulama evrakları sisteme iletildi.</p>
+                <h2>Başvuru ve Evrak Kaydı Başarılı</h2>
+                <p>Öğrenci uygulama evrakları sisteme iletildi.</p>
             </div>
             <div class="modal-body">
                 <div class="summary-box" id="summaryContent"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" id="btnPrintSummary">
-                    <i class="fa-solid fa-print"></i> Yazdır / PDF İndir
+                    Yazdır / PDF İndir
                 </button>
                 <button type="button" class="btn btn-primary" id="btnCloseModal">
                     Tamam
@@ -483,11 +522,42 @@
         </div>
     </div>
 
-    <!-- Script Imports according to Architecture Document (Photo 3) -->
-    <script src="js/db.js"></script>
-    <script src="js/app.js"></script>
-    <script src="js/student.js"></script>
-    <script src="js/advisor.js"></script>
-    <script src="js/health.js"></script>
+    <!-- Authorized Login Modal -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal-card login-card" style="max-width: 420px;">
+            <div class="modal-header">
+                <h2>Yetkili Girişi</h2>
+                <p>Yönetici ve Danışman Paneli Girişi</p>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="login-username" class="required">Kullanıcı Adı</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="login-username" placeholder="Kullanıcı adınızı girin" required>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="login-password" class="required">Şifre</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="login-password" placeholder="Şifrenizi girin" required style="width: 100%; padding: 11px 14px; font-family: inherit; font-size: 0.925rem; border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; transition: all 0.2s ease;">
+                    </div>
+                </div>
+                <div class="alert-danger hidden" id="login-error-msg" style="color: var(--danger); font-size: 0.85rem; margin-bottom: 16px; display: none; align-items: center; gap: 8px;">
+                    Hatalı kullanıcı adı veya şifre girdiniz!
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content: space-between;">
+                <button type="button" class="btn btn-secondary" id="btn-close-login">İptal</button>
+                <button type="button" class="btn btn-primary" id="btn-submit-login">Giriş Yap</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Imports -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script src="js/db.js?v=2.0"></script>
+    <script src="js/app.js?v=2.0"></script>
+    <script src="js/student.js?v=2.0"></script>
+    <script src="js/advisor.js?v=2.0"></script>
 </body>
 </html>

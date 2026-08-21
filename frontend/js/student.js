@@ -1,29 +1,259 @@
 /**
  * ==========================================================================
  * Öğrenci Uygulama Evrakları Portalı - student.js
- * Geliştirici 1 Sorumluluk Alanı: Öğrenci Portalı & Belge Yükleme Mantığı
+ * Form Doğrulama, Dinamik Ders Filtreleme, Hepatit B Yükleme ve Bildirimler
  * ==========================================================================
  */
 
 document.addEventListener('DOMContentLoaded', () => {
     const studentForm = document.getElementById('studentForm');
 
-    // 1. İşe Giriş / Periyodik Muayene Formu - 1 Yıllık Geçerlilik Bitiş Hesabı
+    // Dosya Saklama Haritası (Tüm fonksiyonların erişebilmesi için en üste alındı)
+    const uploadedFileMap = {};
+
+    // ----------------------------------------------------------------------
+    // KARAKTER VE FORMAT SINIRLAMALARI (INPUT MASKS & CONSTRAINTS)
+    // ----------------------------------------------------------------------
+
+    // 1. T.C. Kimlik No: Sadece 11 Haneli Rakam
+    const tcNoInput = document.getElementById('tcNo');
+    if (tcNoInput) {
+        tcNoInput.addEventListener('input', (e) => {
+            let val = e.target.value.replace(/[^0-9]/g, '');
+            if (val.length > 11) val = val.substring(0, 11);
+            e.target.value = val;
+        });
+
+        tcNoInput.addEventListener('blur', (e) => {
+            const val = e.target.value.trim();
+            if (val.length > 0 && val.length !== 11) {
+                e.target.style.borderColor = 'var(--danger)';
+                alert('T.C. Kimlik Numarası tam olarak 11 haneli rakamlardan oluşmalıdır.');
+            } else {
+                e.target.style.borderColor = '';
+            }
+        });
+    }
+
+    // 2. Telefon Numarası Maskeleme: Format 05XX XXX XX XX
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', (e) => {
+            let digits = e.target.value.replace(/[^0-9]/g, '');
+            if (digits.length > 11) digits = digits.substring(0, 11);
+
+            let formatted = '';
+            if (digits.length > 0) {
+                if (!digits.startsWith('0')) digits = '0' + digits;
+                if (digits.length > 1 && !digits.startsWith('05')) {
+                    digits = '05' + digits.substring(2);
+                }
+
+                if (digits.length <= 4) {
+                    formatted = digits;
+                } else if (digits.length <= 7) {
+                    formatted = `${digits.substring(0, 4)} ${digits.substring(4)}`;
+                } else if (digits.length <= 9) {
+                    formatted = `${digits.substring(0, 4)} ${digits.substring(4, 7)} ${digits.substring(7)}`;
+                } else {
+                    formatted = `${digits.substring(0, 4)} ${digits.substring(4, 7)} ${digits.substring(7, 9)} ${digits.substring(9, 11)}`;
+                }
+            }
+            e.target.value = formatted;
+        });
+
+        phoneInput.addEventListener('blur', (e) => {
+            const val = e.target.value.trim();
+            if (val.length > 0 && val.length < 14) {
+                e.target.style.borderColor = 'var(--danger)';
+                alert('Telefon numarası "05XX XXX XX XX" formatında ve 11 haneli olmalıdır.');
+            } else {
+                e.target.style.borderColor = '';
+            }
+        });
+    }
+
+    // 3. Öğrenci Numarası: Sadece Rakamlar (Maksimum 12 hane)
+    const studentNoInput = document.getElementById('studentNo');
+    if (studentNoInput) {
+        studentNoInput.addEventListener('input', (e) => {
+            let val = e.target.value.replace(/[^0-9]/g, '');
+            if (val.length > 12) val = val.substring(0, 12);
+            e.target.value = val;
+        });
+    }
+
+    // 4. Adı Soyadı: Sadece Harfler ve Boşluk
+    const fullNameInput = document.getElementById('fullName');
+    if (fullNameInput) {
+        fullNameInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^a-zA-ZğĞüÜşŞıİöÖçÇ\s]/g, '');
+        });
+    }
+
+    // 5. Kurumsal E-posta: Format ve .edu.tr Kontrolü
+    const emailInput = document.getElementById('email');
+    if (emailInput) {
+        emailInput.addEventListener('blur', (e) => {
+            const val = e.target.value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (val.length > 0 && !emailRegex.test(val)) {
+                e.target.style.borderColor = 'var(--danger)';
+                alert('Lütfen geçerli bir kurumsal e-posta adresi giriniz (Örn: ogrenci@ogrenci.edu.tr).');
+            } else {
+                e.target.style.borderColor = '';
+            }
+        });
+    }
+
+    // 6. Sınıf Seçim Kısıtlaması
+    const departmentSelect = document.getElementById('department');
+    const studentClassSelect = document.getElementById('studentClass');
+    const termSelect = document.getElementById('term');
+    const courseSelect = document.getElementById('courseNameCode');
+
+    if (departmentSelect && studentClassSelect) {
+        const updateClassOptions = () => {
+            const selectedDept = departmentSelect.value;
+            const classOptions = studentClassSelect.querySelectorAll('option');
+
+            const twoYearDepts = [
+                "İlk ve Acil Yardım",
+                "Dijital Sağlık Sistemleri Teknikerliği",
+                "Tıbbi Dokümantasyon ve Sekreterlik",
+                "Laborant ve Veteriner Sağlık"
+            ];
+            const sixYearDepts = [
+                "Tıp Fakültesi"
+            ];
+
+            classOptions.forEach(opt => {
+                const val = opt.value;
+                if (!val) return;
+
+                let shouldDisable = false;
+                if (val === '5. Sınıf' || val === '6. Sınıf') {
+                    if (!sixYearDepts.includes(selectedDept)) shouldDisable = true;
+                } else if (val === '3. Sınıf' || val === '4. Sınıf' || val === 'Yüksek Lisans') {
+                    if (twoYearDepts.includes(selectedDept)) shouldDisable = true;
+                }
+
+                if (shouldDisable) {
+                    opt.disabled = true;
+                    opt.style.display = 'none';
+                    if (studentClassSelect.value === val) studentClassSelect.value = '';
+                } else {
+                    opt.disabled = false;
+                    opt.style.display = 'block';
+                }
+            });
+        };
+
+        departmentSelect.addEventListener('change', updateClassOptions);
+        updateClassOptions();
+    }
+
+    // ----------------------------------------------------------------------
+    // 7. BÖLÜM VE DÖNEME GÖRE DERS LİSTESİ FİLTRELEME
+    // ----------------------------------------------------------------------
+    function updateCourseOptions() {
+        if (!departmentSelect || !termSelect || !courseSelect) return;
+
+        const selectedDept = departmentSelect.value;
+        const selectedTerm = termSelect.value;
+        const currentCourseVal = courseSelect.value;
+
+        if (!selectedDept || !selectedTerm) {
+            courseSelect.innerHTML = '<option value="">-- Uygulama Dersini Seçiniz (Önce Bölüm ve Dönem Seçin) --</option>';
+            return;
+        }
+
+        const filteredCourses = window.AppDB ? window.AppDB.getCoursesByDeptAndTerm(selectedDept, selectedTerm) : [];
+
+        if (filteredCourses.length === 0) {
+            courseSelect.innerHTML = `<option value="">-- "${selectedDept}" - "${selectedTerm}" için henüz ders eklenmedi --</option>`;
+        } else {
+            courseSelect.innerHTML = '<option value="">-- Uygulama Dersini Seçiniz --</option>';
+            filteredCourses.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.codeName;
+                opt.textContent = c.codeName;
+                if (c.codeName === currentCourseVal) opt.selected = true;
+                courseSelect.appendChild(opt);
+            });
+        }
+    }
+
+    if (departmentSelect) departmentSelect.addEventListener('change', updateCourseOptions);
+    if (termSelect) termSelect.addEventListener('change', updateCourseOptions);
+    updateCourseOptions();
+
+    // ----------------------------------------------------------------------
+    // HEPATİT TETKİKİ YAPILDI MI KONTROLÜ & ALAN GÖSTERİMİ
+    // ----------------------------------------------------------------------
+    const hepatitisTestedSelect = document.getElementById('hepatitisTested');
+    const groupHepDate = document.getElementById('group-hep-date');
+    const groupHepFile = document.getElementById('group-hep-file');
+    const hepatitisTestDateInput = document.getElementById('hepatitisTestDate');
+    const hepatitisTestFileInput = document.getElementById('hepatitisTestFile');
+
+    if (hepatitisTestedSelect) {
+        const toggleHepatitisFields = () => {
+            const val = hepatitisTestedSelect.value;
+            if (val === 'Evet') {
+                if (groupHepDate) groupHepDate.style.display = 'block';
+                if (groupHepFile) groupHepFile.style.display = 'block';
+                if (hepatitisTestDateInput) hepatitisTestDateInput.setAttribute('required', 'true');
+                if (hepatitisTestFileInput) hepatitisTestFileInput.setAttribute('required', 'true');
+            } else {
+                if (groupHepDate) groupHepDate.style.display = 'none';
+                if (groupHepFile) groupHepFile.style.display = 'none';
+                if (hepatitisTestDateInput) {
+                    hepatitisTestDateInput.removeAttribute('required');
+                    hepatitisTestDateInput.value = '';
+                }
+                if (hepatitisTestFileInput) {
+                    hepatitisTestFileInput.removeAttribute('required');
+                    hepatitisTestFileInput.value = '';
+                    const box = hepatitisTestFileInput.closest('.file-upload-box');
+                    if (box) {
+                        box.classList.remove('has-file');
+                        const display = box.querySelector('.file-name-display');
+                        if (display) display.textContent = 'Tetkik Sonuç Belgesi Seçiniz (PDF/JPG)';
+                        
+                        const existingPreview = box.parentNode.querySelector('.file-preview-box');
+                        if (existingPreview) existingPreview.remove();
+                    }
+                    delete uploadedFileMap['hepatitisTestFile'];
+                }
+            }
+            if (window.updateProgress) window.updateProgress();
+        };
+
+        hepatitisTestedSelect.addEventListener('change', toggleHepatitisFields);
+        toggleHepatitisFields();
+    }
+
+    // ----------------------------------------------------------------------
+    // OTOMATİK TARİH HESABI (İşe Giriş / Periyodik Muayene - 1 Yıl Bitiş)
+    // ----------------------------------------------------------------------
     const doc2ExamDate = document.getElementById('doc2_examDate');
     const doc2ExpiryDate = document.getElementById('doc2_expiryDate');
 
     if (doc2ExamDate && doc2ExpiryDate) {
         doc2ExamDate.addEventListener('change', (e) => {
             if (e.target.value) {
-                const examDate = new Date(e.target.value);
-                const expiryDate = new Date(examDate);
-                expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-                
-                // Format YYYY-MM-DD
-                const yyyy = expiryDate.getFullYear();
-                const mm = String(expiryDate.getMonth() + 1).padStart(2, '0');
-                const dd = String(expiryDate.getDate()).padStart(2, '0');
-                doc2ExpiryDate.value = `${yyyy}-${mm}-${dd}`;
+                const parts = e.target.value.split('-');
+                if (parts.length === 3) {
+                    const examDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                    const expiryDate = new Date(examDate);
+                    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+                    
+                    const yyyy = expiryDate.getFullYear();
+                    const mm = String(expiryDate.getMonth() + 1).padStart(2, '0');
+                    const dd = String(expiryDate.getDate()).padStart(2, '0');
+                    doc2ExpiryDate.value = `${yyyy}-${mm}-${dd}`;
+                }
             } else {
                 doc2ExpiryDate.value = '';
             }
@@ -31,21 +261,127 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 2. Yüklenen Dosyalar İçin Özel Görsel Vurgu ve Dosya İsmi Gösterimi
+    // ----------------------------------------------------------------------
+    // YÜKLENEN TÜM BELGELER İÇİN ANINDA DOSYA ADI VE BAĞLANTI SAKLAMA
+    // ----------------------------------------------------------------------
     function initFileUploads() {
         const fileInputs = document.querySelectorAll('input[type="file"]');
         fileInputs.forEach(input => {
+            // Chrome siyah varsayılan kutusunu engelle
+            input.setAttribute('title', '');
+
             input.addEventListener('change', (e) => {
                 const box = e.target.closest('.file-upload-box');
                 const nameDisplay = box ? box.querySelector('.file-name-display') : null;
+                const fileId = input.id;
+
+                // Mevcut önizleme kutusunu kaldır
+                const existingPreview = box ? box.parentNode.querySelector('.file-preview-box') : null;
+                if (existingPreview) existingPreview.remove();
 
                 if (e.target.files && e.target.files.length > 0) {
-                    const fileName = e.target.files[0].name;
-                    if (nameDisplay) nameDisplay.textContent = fileName;
-                    if (box) box.classList.add('has-file');
+                    const file = e.target.files[0];
+                    const fileName = file.name;
+                    const objectUrl = URL.createObjectURL(file);
+
+                    // SENKRON OLARAK ANINDA SAKLA
+                    uploadedFileMap[fileId] = {
+                        name: fileName,
+                        url: objectUrl,
+                        type: file.type,
+                        size: file.size,
+                        file: file
+                    };
+
+                    // Asenkron DataURL saklama
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        if (uploadedFileMap[fileId]) {
+                            uploadedFileMap[fileId].dataUrl = evt.target.result;
+                        }
+                    };
+                    reader.readAsDataURL(file);
+
+                    if (nameDisplay) {
+                        nameDisplay.textContent = '✓ Yüklendi: ' + fileName;
+                        nameDisplay.style.color = '#047857';
+                        nameDisplay.style.fontWeight = '700';
+                    }
+                    if (box) {
+                        box.classList.add('has-file');
+                        box.style.backgroundColor = '#ecfdf5';
+                        box.style.borderColor = '#059669';
+                    }
+
+                    // Önizleme kutusu oluşturma
+                    const isPdf = fileName.toLowerCase().endsWith('.pdf');
+                    const isImg = fileName.toLowerCase().match(/\.(jpe?g|png|gif|webp)$/);
+
+                    const previewDiv = document.createElement('div');
+                    previewDiv.className = 'file-preview-box';
+                    previewDiv.style.marginTop = '10px';
+                    previewDiv.style.padding = '12px';
+                    previewDiv.style.border = '1px solid #059669';
+                    previewDiv.style.borderRadius = '8px';
+                    previewDiv.style.backgroundColor = '#f0fdf4';
+
+                    let previewHtml = `
+                        <div class="file-preview-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <span class="file-info" style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #065f46; font-weight: 700;">
+                                ✓ Yüklenen Belge: ${fileName}
+                            </span>
+                            <button type="button" class="btn-remove-file" style="padding: 5px 10px; font-size: 11px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">✕ Belgeyi Kaldır</button>
+                        </div>
+                    `;
+
+                    if (isPdf) {
+                        previewHtml += `
+                            <div class="pdf-preview-wrapper" style="margin-top: 8px; width: 100%; height: 280px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; background: #ffffff;">
+                                <iframe src="${objectUrl}" style="width: 100%; height: 100%; border: none;"></iframe>
+                            </div>
+                        `;
+                    } else if (isImg) {
+                        previewHtml += `
+                            <div class="img-preview-wrapper" style="margin-top: 8px; max-width: 100%; max-height: 250px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; display: inline-block; background: #ffffff;">
+                                <img src="${objectUrl}" style="max-width: 100%; max-height: 250px; display: block; object-fit: contain;" />
+                            </div>
+                        `;
+                    }
+
+                    previewDiv.innerHTML = previewHtml;
+                    if (box && box.parentNode) {
+                        box.parentNode.appendChild(previewDiv);
+                    }
+
+                    previewDiv.querySelector('.btn-remove-file').addEventListener('click', () => {
+                        input.value = '';
+                        previewDiv.remove();
+                        delete uploadedFileMap[fileId];
+                        if (nameDisplay) {
+                            nameDisplay.textContent = 'Dosya Seçiniz veya Sürükleyiniz';
+                            nameDisplay.style.color = '';
+                            nameDisplay.style.fontWeight = '';
+                        }
+                        if (box) {
+                            box.classList.remove('has-file');
+                            box.style.backgroundColor = '';
+                            box.style.borderColor = '';
+                        }
+                        if (window.updateProgress) window.updateProgress();
+                    });
+
                 } else {
-                    if (nameDisplay) nameDisplay.textContent = 'Dosya Seçiniz veya Sürükleyiniz';
-                    if (box) box.classList.remove('has-file');
+                    delete uploadedFileMap[fileId];
+                    if (nameDisplay) {
+                        nameDisplay.textContent = 'Dosya Seçiniz veya Sürükleyiniz';
+                        nameDisplay.style.color = '';
+                        nameDisplay.style.fontWeight = '';
+                    }
+                    if (box) {
+                        box.classList.remove('has-file');
+                        box.style.backgroundColor = '';
+                        box.style.borderColor = '';
+                    }
                 }
                 if (window.updateProgress) window.updateProgress();
             });
@@ -53,34 +389,110 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     initFileUploads();
 
-    // 3. Öğrenci Formu Gönderimi ve Özet Oluşturma
+    // ----------------------------------------------------------------------
+    // FORM GÖNDERİMİ & OLUMLU / OLUMSUZ BİLDİRİM YÖNETİMİ
+    // ----------------------------------------------------------------------
     if (studentForm) {
-        studentForm.addEventListener('submit', (e) => {
+        studentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Zorunlu alan kontrolü
+            // 1. Tüm Sekmelerdeki Zorunlu Alanların Kontrolü
             const requiredInputs = studentForm.querySelectorAll('[required]');
             let isValid = true;
+            const missingFields = [];
+            let firstInvalidInput = null;
+            let invalidTabId = null;
 
             requiredInputs.forEach(input => {
-                if (!input.value || input.value.trim() === '') {
-                    isValid = false;
-                    input.style.borderColor = 'var(--danger)';
-                } else {
-                    input.style.borderColor = '';
+                const group = input.closest('.form-group');
+                const isGroupVisible = !group || group.style.display !== 'none';
+
+                if (isGroupVisible) {
+                    if (!input.value || input.value.trim() === '') {
+                        isValid = false;
+                        input.style.borderColor = 'var(--danger)';
+                        
+                        if (!firstInvalidInput) {
+                            firstInvalidInput = input;
+                            const pane = input.closest('.tab-pane');
+                            if (pane) invalidTabId = pane.id;
+                        }
+
+                        let labelText = 'İsimsiz Alan';
+                        if (group) {
+                            const lbl = group.querySelector('label');
+                            if (lbl) labelText = lbl.textContent.replace('*', '').trim();
+                        }
+                        if (!missingFields.includes(labelText)) missingFields.push(labelText);
+                    } else {
+                        input.style.borderColor = '';
+                    }
                 }
             });
 
+            // T.C. Kimlik kontrolü
+            const tcVal = tcNoInput ? tcNoInput.value.trim() : '';
+            if (tcVal.length > 0 && tcVal.length !== 11) {
+                isValid = false;
+                if (tcNoInput) tcNoInput.style.borderColor = 'var(--danger)';
+                missingFields.push('T.C. Kimlik Numarası (11 Rakam Olmalıdır)');
+            }
+
+            // Telefon kontrolü
+            const phoneVal = phoneInput ? phoneInput.value.trim() : '';
+            if (phoneVal.length < 14) {
+                isValid = false;
+                if (phoneInput) phoneInput.style.borderColor = 'var(--danger)';
+                missingFields.push('Telefon Numarası (05XX XXX XX XX Formatında Olmalıdır)');
+            }
+
+            // 2. OLUMSUZ BİLDİRİM (Eksik Bilgiler Varsa)
             if (!isValid) {
-                alert('Lütfen zorunlu tüm alanları eksiksiz doldurunuz.');
+                let errorMsg = "BAŞVURU GÖNDERİLMEDİ (OLUMSUZ):\n\nYönetici paneline kaydolabilmesi için lütfen aşağıdaki eksik alanları tamamlayınız:\n\n";
+                missingFields.forEach(item => {
+                    errorMsg += "• " + item + "\n";
+                });
+                alert(errorMsg);
+
+                // Eksik alanın bulunduğu sekmeye otomatik geç
+                if (invalidTabId) {
+                    const tabBtn = document.querySelector(`.tab-btn[data-tab="${invalidTabId}"]`);
+                    if (tabBtn) tabBtn.click();
+                }
+                if (firstInvalidInput) {
+                    firstInvalidInput.focus();
+                }
                 return;
             }
 
-            // Verileri topla (Mock DB / db.js entegrasyonu)
+            // 3. BAŞVURU KAYIT SÜRECİ (Tüm Alanlar Tamamlandığında)
             const formData = new FormData(studentForm);
+            const appId = 'APP-' + Date.now();
+
+            // Dosya Kaydetme (IndexedDB)
+            const fileKeys = ['doc1_file', 'doc2_file', 'doc3_file', 'doc4_file', 'doc5_file', 'doc6_file', 'doc7_file', 'hepatitisTestFile', 'vaccineCardFile'];
+            
+            for (const key of fileKeys) {
+                const fileData = uploadedFileMap[key];
+                if (fileData) {
+                    try {
+                        const payload = {
+                            name: fileData.name,
+                            url: fileData.dataUrl || fileData.url || '',
+                            type: fileData.type || ''
+                        };
+                        await window.FileStorage.saveFile(`${appId}_${key}`, payload);
+                    } catch (err) {
+                        console.warn(`[FileStorage Warning] ${key} kaydedilirken uyarı:`, err);
+                    }
+                }
+            }
+
             const studentRecord = {
+                id: appId,
                 studentNo: formData.get('studentNo'),
                 fullName: formData.get('fullName'),
+                tcNo: formData.get('tcNo'),
                 department: formData.get('department'),
                 studentClass: formData.get('studentClass'),
                 phone: formData.get('phone'),
@@ -93,43 +505,154 @@ document.addEventListener('DOMContentLoaded', () => {
                 unitName: formData.get('unitName'),
                 applicationDays: formData.get('applicationDays'),
                 responsibleInstructor: formData.get('responsibleInstructor'),
+
+                // Hepatit B Bilgileri
+                hepatitisTested: formData.get('hepatitisTested'),
+                hepatitisTestDate: formData.get('hepatitisTestDate'),
+
+                // Belge Detayları & Dosya Bağlantıları (IndexedDB Referansları)
+                doc1_date: formData.get('doc1_date'),
+                doc1_file_name: uploadedFileMap['doc1_file'] ? uploadedFileMap['doc1_file'].name : null,
+                doc1_file_url: uploadedFileMap['doc1_file'] ? `IndexedDB:${appId}_doc1_file` : null,
+
+                doc2_examDate: formData.get('doc2_examDate'),
+                doc2_expiryDate: formData.get('doc2_expiryDate'),
+                doc2_file_name: uploadedFileMap['doc2_file'] ? uploadedFileMap['doc2_file'].name : null,
+                doc2_file_url: uploadedFileMap['doc2_file'] ? `IndexedDB:${appId}_doc2_file` : null,
+
+                doc3_physicalCount: formData.get('doc3_physicalCount'),
+                doc3_file_name: uploadedFileMap['doc3_file'] ? uploadedFileMap['doc3_file'].name : null,
+                doc3_file_url: uploadedFileMap['doc3_file'] ? `IndexedDB:${appId}_doc3_file` : null,
+
+                doc4_file_name: uploadedFileMap['doc4_file'] ? uploadedFileMap['doc4_file'].name : null,
+                doc4_file_url: uploadedFileMap['doc4_file'] ? `IndexedDB:${appId}_doc4_file` : null,
+
+                doc5_date: formData.get('doc5_date'),
+                doc5_file_name: uploadedFileMap['doc5_file'] ? uploadedFileMap['doc5_file'].name : null,
+                doc5_file_url: uploadedFileMap['doc5_file'] ? `IndexedDB:${appId}_doc5_file` : null,
+
+                doc6_date: formData.get('doc6_date'),
+                doc6_file_name: uploadedFileMap['doc6_file'] ? uploadedFileMap['doc6_file'].name : null,
+                doc6_file_url: uploadedFileMap['doc6_file'] ? `IndexedDB:${appId}_doc6_file` : null,
+
+                doc7_date: formData.get('doc7_date'),
+                doc7_file_name: uploadedFileMap['doc7_file'] ? uploadedFileMap['doc7_file'].name : null,
+                doc7_file_url: uploadedFileMap['doc7_file'] ? `IndexedDB:${appId}_doc7_file` : null,
+
+                // Hepatit B Dosyaları
+                hepatitisTest_file_name: uploadedFileMap['hepatitisTestFile'] ? uploadedFileMap['hepatitisTestFile'].name : null,
+                hepatitisTest_file_url: uploadedFileMap['hepatitisTestFile'] ? `IndexedDB:${appId}_hepatitisTestFile` : null,
+                vaccineCard_file_name: uploadedFileMap['vaccineCardFile'] ? uploadedFileMap['vaccineCardFile'].name : null,
+                vaccineCard_file_url: uploadedFileMap['vaccineCardFile'] ? `IndexedDB:${appId}_vaccineCardFile` : null,
+
                 submissionDate: new Date().toISOString()
             };
 
-            // db.js varsa mock DB'ye kaydet
+            // DB'ye kaydet
             if (window.AppDB && window.AppDB.saveStudentApplication) {
                 window.AppDB.saveStudentApplication(studentRecord);
             }
 
-            // Özet Penceresini (Modal) Doldur ve Göster
+            // 4. OLUMLU BİLDİRİM (Başvuru Başarıyla Gönderildi)
+            alert("BAŞARILI (OLUMLU):\n\nBaşvurunuz ve yüklediğiniz tüm belgeler başarıyla sisteme kaydedildi ve Yönetici Paneline iletildi.");
+
+            // PDF çıktısı ve özet için linkler
+            const docTitles = {
+                doc1_file: "16 Saatlik İSG Eğitimi Belgesi",
+                doc2_file: "İşe Giriş / Periyodik Muayene Formu",
+                doc3_file: "Gizlilik Sözleşmesi",
+                doc4_file: "Kimlik Fotokopisi",
+                doc5_file: "Hemogram Tetkik Belgesi",
+                doc6_file: "ELISA Tetkik Belgesi",
+                doc7_file: "Akciğer Grafisi / Raporu",
+                hepatitisTestFile: "Hepatit B Tetkik Belgesi",
+                vaccineCardFile: "Hepatit B Aşı Kartı"
+            };
+
+            let fileLinksHtml = '<ul class="print-file-links-list" style="margin-top: 8px; padding-left: 20px;">';
+            let hasAnyFile = false;
+
+            Object.keys(docTitles).forEach(key => {
+                if (uploadedFileMap[key]) {
+                    hasAnyFile = true;
+                    const item = uploadedFileMap[key];
+                    fileLinksHtml += `
+                        <li style="margin-bottom: 4px;">
+                            <strong>${docTitles[key]}:</strong> 
+                            <a href="${item.url}" target="_blank" download="${item.name}" class="doc-pdf-link" style="color: #2563eb; font-weight: 600; text-decoration: underline;">
+                                ${item.name} (Dosyayı İndir/Aç)
+                            </a>
+                        </li>
+                    `;
+                }
+            });
+
+            if (!hasAnyFile) {
+                fileLinksHtml += '<li style="color: #64748b; font-style: italic;">Yüklenmiş dosya bulunmamaktadır.</li>';
+            }
+            fileLinksHtml += '</ul>';
+
+            // Özet Modal İçeriğini Doldur
             const summaryContent = document.getElementById('summaryContent');
             const successModal = document.getElementById('successModal');
 
             if (summaryContent) {
+                let hepStatusText = studentRecord.hepatitisTested === 'Evet' 
+                    ? `Evet (Tarih: ${studentRecord.hepatitisTestDate ? new Date(studentRecord.hepatitisTestDate).toLocaleDateString('tr-TR') : '—'})` 
+                    : 'Hayır, Yapılmadı';
+
                 summaryContent.innerHTML = `
-                    <div class="summary-item">
-                        <span class="summary-label">Öğrenci No / Ad Soyad:</span>
-                        <span class="summary-val">${studentRecord.studentNo} - ${studentRecord.fullName}</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="summary-label">Bölüm / Sınıf:</span>
-                        <span class="summary-val">${studentRecord.department} (${studentRecord.studentClass})</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="summary-label">Dönem & Ders:</span>
-                        <span class="summary-val">${studentRecord.academicYear} ${studentRecord.term} - ${studentRecord.courseNameCode}</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="summary-label">Uygulama Kurumu:</span>
-                        <span class="summary-val">${studentRecord.institution}</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="summary-label">Akademik Danışman:</span>
-                        <span class="summary-val">${studentRecord.academicAdvisor}</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="summary-label">Sorumlu Öğretim Elemanı:</span>
-                        <span class="summary-val">${studentRecord.responsibleInstructor}</span>
+                    <div class="pdf-print-container" style="font-size: 0.85rem; line-height: 1.4;">
+                        <div style="border-bottom: 2px solid #2563eb; padding-bottom: 8px; margin-bottom: 12px; text-align: center;">
+                            <h3 style="font-size: 1.1rem; color: #0f172a; margin: 0;">Sağlık Bilimleri Uygulama ve Staj Formu</h3>
+                            <span style="font-size: 0.75rem; color: #64748b;">Başvuru Kayıt Raporu</span>
+                        </div>
+
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
+                            <tr>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1; font-weight: 700; width: 35%; background: #f8fafc;">Öğrenci Adı Soyadı:</td>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1;">${studentRecord.fullName}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1; font-weight: 700; background: #f8fafc;">Öğrenci No / T.C.:</td>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1;">${studentRecord.studentNo} / ${studentRecord.tcNo || '—'}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1; font-weight: 700; background: #f8fafc;">Bölüm / Sınıf:</td>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1;">${studentRecord.department} (${studentRecord.studentClass})</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1; font-weight: 700; background: #f8fafc;">İletişim (Tel / E-posta):</td>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1;">${studentRecord.phone} • ${studentRecord.email}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1; font-weight: 700; background: #f8fafc;">Akademik Danışman:</td>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1;">${studentRecord.academicAdvisor}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1; font-weight: 700; background: #f8fafc;">Dönem / Ders:</td>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1;">${studentRecord.academicYear} ${studentRecord.term} - ${studentRecord.courseNameCode}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1; font-weight: 700; background: #f8fafc;">Kurum / Birim:</td>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1;">${studentRecord.institution} (${studentRecord.unitName || 'Genel'})</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1; font-weight: 700; background: #f8fafc;">Uygulama Günleri / Sorumlu:</td>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1;">${studentRecord.applicationDays} / ${studentRecord.responsibleInstructor}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1; font-weight: 700; background: #f8fafc;">Hepatit B Tetkiki:</td>
+                                <td style="padding: 4px 8px; border: 1px solid #cbd5e1; font-weight: bold; color: ${studentRecord.hepatitisTested === 'Evet' ? 'green' : 'red'};">${hepStatusText}</td>
+                            </tr>
+                        </table>
+
+                        <div style="margin-top: 8px;">
+                            <h4 style="font-size: 0.9rem; font-weight: 700; color: #0f172a; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">
+                                Yüklenen Belgeler ve Bağlantıları (Linkler):
+                            </h4>
+                            ${fileLinksHtml}
+                        </div>
                     </div>
                 `;
             }

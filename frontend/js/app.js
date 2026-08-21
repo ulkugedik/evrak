@@ -78,34 +78,40 @@ document.addEventListener('DOMContentLoaded', () => {
         window.updateProgress();
     }
 
-    // 3. Taslak Kaydetme (localStorage)
-    const btnDraftSave = document.getElementById('btnDraftSave');
-    if (btnDraftSave && studentForm) {
-        btnDraftSave.addEventListener('click', () => {
-            const formData = new FormData(studentForm);
-            const dataObj = {};
-            formData.forEach((value, key) => {
-                if (typeof value === 'string') dataObj[key] = value;
+    // 3. Form Selectlerini Dinamik Doldurma (Danışman ve Sorumlu Öğretim Elemanı)
+    window.populateDynamicFormSelects = function() {
+        // Danışmanlar
+        const advisorSelect = document.getElementById('academicAdvisor');
+        if (advisorSelect && window.AppDB) {
+            const currentVal = advisorSelect.value;
+            const advisors = window.AppDB.getAdvisors();
+            advisorSelect.innerHTML = '<option value="">-- Akademik Danışmanınızı Seçiniz --</option>';
+            advisors.forEach(adv => {
+                const opt = document.createElement('option');
+                opt.value = adv;
+                opt.textContent = adv;
+                if (adv === currentVal) opt.selected = true;
+                advisorSelect.appendChild(opt);
             });
-            localStorage.setItem('student_form_draft', JSON.stringify(dataObj));
-            alert('Form taslağınız başarıyla kaydedildi.');
-        });
-
-        // Restore draft if exists
-        const savedDraft = localStorage.getItem('student_form_draft');
-        if (savedDraft) {
-            try {
-                const data = JSON.parse(savedDraft);
-                Object.keys(data).forEach(key => {
-                    const el = studentForm.querySelector(`[name="${key}"]`);
-                    if (el && el.type !== 'file') el.value = data[key];
-                });
-                window.updateProgress();
-            } catch (e) {
-                console.error('Draft restore failed', e);
-            }
         }
-    }
+
+        // Sorumlu Öğretim Elemanı
+        const instructorSelect = document.getElementById('responsibleInstructor');
+        if (instructorSelect && window.AppDB) {
+            const currentVal = instructorSelect.value;
+            const instructors = window.AppDB.getInstructors();
+            instructorSelect.innerHTML = '<option value="">-- Öğretim Elemanı Seçiniz --</option>';
+            instructors.forEach(ins => {
+                const opt = document.createElement('option');
+                opt.value = ins;
+                opt.textContent = ins;
+                if (ins === currentVal) opt.selected = true;
+                instructorSelect.appendChild(opt);
+            });
+        }
+    };
+
+    window.populateDynamicFormSelects();
 
     // 4. Modal Buton Yönetimi
     const successModal = document.getElementById('successModal');
@@ -118,5 +124,101 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnPrintSummary) {
         btnPrintSummary.addEventListener('click', () => window.print());
+    }
+
+    // 5. Yetkili Giriş & Görünüm Yönlendirme
+    const btnLoginTrigger = document.getElementById('btn-login-trigger');
+    const btnLogout = document.getElementById('btn-logout');
+    const loginModal = document.getElementById('loginModal');
+    const btnCloseLogin = document.getElementById('btn-close-login');
+    const btnSubmitLogin = document.getElementById('btn-submit-login');
+    
+    const loginUsernameInput = document.getElementById('login-username');
+    const loginPasswordInput = document.getElementById('login-password');
+    const loginErrorMsg = document.getElementById('login-error-msg');
+    
+    const dashboardContainer = document.getElementById('dashboard-container');
+    const progressCard = document.querySelector('.progress-bar-card');
+    const navTabs = document.querySelector('.nav-tabs');
+
+    // Yetkili Giriş Modalı Aç/Kapa
+    if (btnLoginTrigger && loginModal) {
+        btnLoginTrigger.addEventListener('click', () => {
+            loginUsernameInput.value = '';
+            loginPasswordInput.value = '';
+            if (loginErrorMsg) {
+                loginErrorMsg.classList.add('hidden');
+                loginErrorMsg.style.display = 'none';
+            }
+            loginModal.classList.add('active');
+        });
+    }
+
+    if (btnCloseLogin && loginModal) {
+        btnCloseLogin.addEventListener('click', () => {
+            loginModal.classList.remove('active');
+        });
+    }
+
+    // Yetkili Giriş Yap
+    if (btnSubmitLogin) {
+        btnSubmitLogin.addEventListener('click', () => {
+            const username = loginUsernameInput.value.trim();
+            const password = loginPasswordInput.value;
+
+            if ((username === 'admin' || username === 'danisman' || username === 'saglik') && (password === 'admin' || password === '123')) {
+                loginModal.classList.remove('active');
+                if (btnLoginTrigger) btnLoginTrigger.classList.add('hidden');
+                if (btnLogout) btnLogout.classList.remove('hidden');
+                showAuthorizedView('admin');
+            } else {
+                if (loginErrorMsg) {
+                    loginErrorMsg.classList.remove('hidden');
+                    loginErrorMsg.style.display = 'flex';
+                }
+            }
+        });
+
+        // Enter tuşu ile giriş
+        loginPasswordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') btnSubmitLogin.click();
+        });
+    }
+
+    // Çıkış Yap
+    if (btnLogout) {
+        btnLogout.addEventListener('click', () => {
+            if (btnLoginTrigger) btnLoginTrigger.classList.remove('hidden');
+            if (btnLogout) btnLogout.classList.add('hidden');
+            showAuthorizedView('student');
+        });
+    }
+
+    function showAuthorizedView(role) {
+        if (role === 'student') {
+            if (studentForm) studentForm.classList.remove('hidden');
+            if (progressCard) progressCard.classList.remove('hidden');
+            if (navTabs) navTabs.classList.remove('hidden');
+            if (dashboardContainer) {
+                dashboardContainer.classList.add('hidden');
+                dashboardContainer.innerHTML = '';
+            }
+            window.populateDynamicFormSelects();
+        } else {
+            // Öğrenci formu alanlarını gizle, takip panelini aç
+            if (studentForm) studentForm.classList.add('hidden');
+            if (progressCard) progressCard.classList.add('hidden');
+            if (navTabs) navTabs.classList.add('hidden');
+            if (dashboardContainer) {
+                dashboardContainer.classList.remove('hidden');
+                dashboardContainer.innerHTML = '';
+            }
+
+            if (window.initDanismanPortali) {
+                window.initDanismanPortali(dashboardContainer);
+            } else {
+                dashboardContainer.innerHTML = '<div class="system-notice"><p>Yönetim paneli yüklenemedi.</p></div>';
+            }
+        }
     }
 });

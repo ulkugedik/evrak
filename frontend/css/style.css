@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Öğrenci Uygulama Evrakları ve Sağlık/Aşılama Takip Sistemi - Modern UI CSS
+   Sağlık Bilimleri Uygulama ve Staj Portalı - Modern UI CSS (İkonsuz)
    ========================================================================== */
 
 :root {
@@ -72,19 +72,6 @@ body {
     gap: 18px;
 }
 
-.brand-icon {
-    width: 54px;
-    height: 54px;
-    background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
-    color: #ffffff;
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-}
-
 .header-brand h1 {
     font-size: 1.35rem;
     font-weight: 700;
@@ -106,6 +93,7 @@ body {
 .btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     padding: 10px 18px;
     font-family: inherit;
@@ -159,6 +147,15 @@ body {
 .btn-success:hover {
     background-color: var(--success-hover);
     transform: translateY(-1px);
+}
+
+.btn-danger {
+    background-color: var(--danger);
+    color: #ffffff;
+}
+
+.btn-danger:hover {
+    background-color: #b91c1c;
 }
 
 .btn-lg {
@@ -281,13 +278,6 @@ body {
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--text-main);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.section-header h2 i {
-    color: var(--primary);
 }
 
 .section-header p {
@@ -335,14 +325,6 @@ label.required::after {
     align-items: center;
 }
 
-.input-icon {
-    position: absolute;
-    left: 14px;
-    color: #94a3b8;
-    font-size: 1rem;
-    pointer-events: none;
-}
-
 input[type="text"],
 input[type="tel"],
 input[type="email"],
@@ -350,7 +332,7 @@ input[type="date"],
 input[type="number"],
 select {
     width: 100%;
-    padding: 11px 14px 11px 40px;
+    padding: 11px 14px;
     font-family: inherit;
     font-size: 0.925rem;
     border: 1px solid var(--border);
@@ -361,59 +343,13 @@ select {
     transition: all 0.2s ease;
 }
 
-input[type="date"] {
-    padding-left: 40px;
-}
-
 input:focus,
 select:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
-/* Radio Toggles */
-.radio-toggle-group {
-    display: flex;
-    gap: 12px;
-}
-
-.radio-option {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 16px;
-    background: #ffffff;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-weight: 500;
-    font-size: 0.9rem;
-}
-
-.radio-option input[type="radio"] {
-    display: none;
-}
-
-.radio-option span {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-muted);
-}
-
-.radio-option:has(input:checked) {
-    background-color: var(--primary-light);
-    border-color: var(--primary);
-}
-
-.radio-option:has(input:checked) span {
-    color: var(--primary);
-    font-weight: 600;
-}
-
-/* Documents List & Cards */
+/* Documents List */
 .documents-list {
     display: flex;
     flex-direction: column;
@@ -421,16 +357,16 @@ select:focus {
 }
 
 .doc-card {
+    position: relative;
     background: #ffffff;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    padding: 20px;
-    position: relative;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    padding: 24px;
+    transition: all 0.2s ease;
 }
 
 .doc-card:hover {
-    border-color: #cbd5e1;
+    border-color: var(--border-hover);
     box-shadow: var(--shadow-sm);
 }
 
@@ -438,35 +374,28 @@ select:focus {
     position: absolute;
     top: 16px;
     right: 16px;
-    font-size: 0.75rem;
-    font-weight: 700;
     padding: 4px 10px;
     border-radius: 999px;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 
 .required-badge {
-    background-color: #fee2e2;
-    color: #991b1b;
+    background-color: #fef3c7;
+    color: #92400e;
 }
 
 .optional-badge {
-    background-color: #f1f5f9;
-    color: #475569;
+    background-color: #e0f2fe;
+    color: #075985;
 }
 
 .doc-info h3 {
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 700;
+    color: var(--text-main);
     margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.doc-info h3 i {
-    color: var(--primary);
+    padding-right: 140px;
 }
 
 .doc-desc {
@@ -479,20 +408,22 @@ select:focus {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
+    align-items: flex-end;
 }
 
-/* Custom File Upload Box */
 .file-upload-box {
     position: relative;
     border: 2px dashed var(--border);
     border-radius: var(--radius-sm);
     padding: 12px 16px;
+    text-align: center;
     background-color: #f8fafc;
-    display: flex;
-    align-items: center;
-    gap: 10px;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
 }
 
 .file-upload-box:hover {
@@ -500,150 +431,34 @@ select:focus {
     background-color: var(--primary-light);
 }
 
-.file-upload-box input[type="file"] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-    width: 100%;
-    height: 100%;
+.file-upload-box.has-file {
+    border-color: var(--success);
+    background-color: #ecfdf5;
+    color: var(--success);
 }
 
-.file-upload-box i {
-    color: var(--primary);
-    font-size: 1.25rem;
+.file-upload-box input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 10;
 }
 
 .file-name-display {
     font-size: 0.85rem;
+    font-weight: 600;
     color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.file-upload-box.has-file {
-    border-style: solid;
-    border-color: var(--success);
-    background-color: #f0fdf4;
-}
-
-.file-upload-box.has-file i {
-    color: var(--success);
+    pointer-events: none;
 }
 
 .file-upload-box.has-file .file-name-display {
-    color: var(--success-hover);
-    font-weight: 600;
+    color: var(--success);
 }
 
-/* Status Badges */
-.doc-status-row {
-    margin-top: 12px;
-    display: flex;
-    align-items: center;
-}
-
-.status-badge {
-    font-size: 0.775rem;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 6px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.status-pending {
-    background-color: #fef3c7;
-    color: #92400e;
-}
-
-.status-approved {
-    background-color: #d1fae5;
-    color: #065f46;
-}
-
-/* Health & Vaccine Groups */
-.form-card-group {
-    background: #ffffff;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 24px;
-    margin-bottom: 24px;
-}
-
-.group-title {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--text-main);
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.group-title i {
-    color: var(--primary);
-}
-
-.group-header-flex {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.section-subtext {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-bottom: 16px;
-}
-
-.dose-container {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.dose-card {
-    background: #f8fafc;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 18px;
-    position: relative;
-}
-
-.dose-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px dashed var(--border);
-}
-
-.dose-number {
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: var(--primary);
-}
-
-.btn-remove-dose {
-    background: transparent;
-    border: none;
-    color: var(--danger);
-    cursor: pointer;
-    font-size: 1rem;
-    padding: 4px 8px;
-    border-radius: 4px;
-    transition: background 0.2s ease;
-}
-
-.btn-remove-dose:hover {
-    background: #fee2e2;
-}
-
-/* Tab Footer */
 .tab-footer {
     display: flex;
     justify-content: space-between;
@@ -653,17 +468,19 @@ select:focus {
     border-top: 1px solid var(--border);
 }
 
-/* Modal */
+/* Modals */
 .modal-overlay {
     position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.6);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 23, 42, 0.6);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    z-index: 999;
+    z-index: 1000;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
@@ -677,18 +494,18 @@ select:focus {
 .modal-card {
     background: #ffffff;
     border-radius: var(--radius-lg);
-    max-width: 650px;
     width: 100%;
+    max-width: 680px;
     max-height: 90vh;
     overflow-y: auto;
-    padding: 32px;
     box-shadow: var(--shadow-lg);
-    transform: scale(0.95);
-    transition: transform 0.3s ease;
+    padding: 32px;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
 }
 
 .modal-overlay.active .modal-card {
-    transform: scale(1);
+    transform: translateY(0);
 }
 
 .modal-header {
@@ -696,57 +513,27 @@ select:focus {
     margin-bottom: 24px;
 }
 
-.success-icon {
-    width: 64px;
-    height: 64px;
-    background-color: #d1fae5;
-    color: var(--success);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 32px;
-    margin: 0 auto 16px;
-}
-
 .modal-header h2 {
     font-size: 1.35rem;
     font-weight: 700;
+    color: var(--text-main);
 }
 
 .modal-header p {
     font-size: 0.9rem;
     color: var(--text-muted);
+    margin-top: 4px;
 }
 
-.summary-box {
-    background: #f8fafc;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 16px;
-    font-size: 0.875rem;
+.modal-body {
     margin-bottom: 24px;
 }
 
-.summary-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-}
-
-.summary-item:last-child {
-    border-bottom: none;
-}
-
-.summary-label {
-    font-weight: 600;
-    color: var(--text-muted);
-}
-
-.summary-val {
-    font-weight: 600;
-    color: var(--text-main);
+.summary-box {
+    background-color: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
 }
 
 .modal-footer {
@@ -755,26 +542,282 @@ select:focus {
     gap: 12px;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .nav-tabs {
-        grid-template-columns: repeat(2, 1fr);
+.hidden {
+    display: none !important;
+}
+
+/* Filters & Dashboard */
+.filters-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px 24px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 24px;
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 16px;
+    align-items: center;
+}
+
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-input-wrapper input {
+    padding-left: 14px;
+}
+
+.list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.student-list-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.student-card-header {
+    padding: 20px 24px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.student-card-header:hover {
+    background: #f8fafc;
+}
+
+.student-title h4 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.student-title p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.student-summary-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.student-card-body {
+    padding: 24px;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    display: none;
+}
+
+.student-details-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detail-label {
+    font-size: 0.775rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.detail-val {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.docs-review-section h5 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--text-main);
+}
+
+.docs-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+}
+
+.docs-table th, .docs-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.875rem;
+}
+
+.docs-table th {
+    font-weight: 700;
+    color: var(--text-muted);
+    background-color: #f8fafc;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.badge-pending { background-color: #fffbeb; color: #b45309; }
+.badge-approved { background-color: #ecfdf5; color: #047857; }
+.badge-rejected { background-color: #fef2f2; color: #b91c1c; }
+
+.doc-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.doc-link:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   2. MADDE: TEK SAYFA PDF VE YAZDIRMA STİLLERİ (@media print)
+   ========================================================================== */
+@page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+}
+
+@media print {
+    body {
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 11pt !important;
+        color: #000000 !important;
     }
 
-    .form-grid, .doc-fields {
+    .main-header,
+    .progress-bar-card,
+    .nav-tabs,
+    #studentForm,
+    #dashboard-container,
+    #loginModal,
+    .modal-footer,
+    .modal-header p,
+    .btn {
+        display: none !important;
+    }
+
+    .modal-overlay {
+        position: static !important;
+        background: none !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+    }
+
+    .modal-card.print-card {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    .summary-box {
+        background: #ffffff !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+
+    .pdf-print-container {
+        font-size: 10pt !important;
+        line-height: 1.3 !important;
+        page-break-inside: avoid !important;
+    }
+
+    .pdf-print-container table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin-bottom: 8px !important;
+    }
+
+    .pdf-print-container td {
+        padding: 5px 8px !important;
+        border: 1px solid #94a3b8 !important;
+        font-size: 9.5pt !important;
+    }
+
+    .print-doc-link, .doc-pdf-link {
+        color: #1d4ed8 !important;
+        text-decoration: underline !important;
+        font-weight: 600 !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .filters-grid {
         grid-template-columns: 1fr;
     }
-
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
     .form-group.full-width {
         grid-column: span 1;
     }
-
-    .main-header {
-        flex-direction: column;
-        align-items: flex-start;
+    .nav-tabs {
+        grid-template-columns: 1fr;
     }
-
-    .tab-pane {
-        padding: 20px;
+    .doc-fields {
+        grid-template-columns: 1fr;
     }
+}
+
+/* Spinner Animation */
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border-left-color: var(--primary);
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
