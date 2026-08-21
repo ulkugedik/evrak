@@ -149,7 +149,6 @@
                 });
             }
 
-            // Sekme değiştirme dinleyicileri
             container.querySelectorAll('.admin-nav-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     activeAdminTab = btn.getAttribute('data-tab');
@@ -294,7 +293,6 @@
                 const activeKeys = keys.filter(k => statuses[k].status !== 'Yüklenmedi');
                 const totalDocs = activeKeys.length;
                 const approvedCount = activeKeys.filter(k => statuses[k].status === 'Onaylandı').length;
-                const pendingCount = activeKeys.filter(k => statuses[k].status === 'Bekliyor').length;
 
                 let progressBadgeClass = 'badge-pending';
                 let progressBadgeText = `${approvedCount}/${totalDocs} Onaylandı`;
@@ -349,10 +347,10 @@
                             </div>
                         </div>
 
-                        <!-- Evraklar Listesi -->
+                        <!-- Genel & İdari Belgeler Listesi -->
                         <div class="docs-review-section">
-                            <h5 style="margin-top: 10px; margin-bottom: 12px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-folder-open"></i> Genel & İdari Belgeler
+                            <h5 style="margin-top: 10px; margin-bottom: 12px; font-weight: 700; color: var(--primary);">
+                                Genel & İdari Belgeler
                             </h5>
                             <table class="docs-table" style="margin-bottom: 24px;">
                                 <thead>
@@ -383,10 +381,10 @@
                                         if (doc.status !== 'Yüklenmedi') {
                                             actionButtons = `
                                                 <button type="button" class="btn btn-success btn-sm btn-approve-doc" data-student-id="${app.id}" data-doc-key="${key}" style="padding: 4px 8px; font-size: 0.75rem; margin-right: 4px;">
-                                                    <i class="fa-solid fa-check"></i> Onayla
+                                                    Onayla
                                                 </button>
                                                 <button type="button" class="btn btn-danger btn-sm btn-reject-doc" data-student-id="${app.id}" data-doc-key="${key}" style="padding: 4px 8px; font-size: 0.75rem;">
-                                                    <i class="fa-solid fa-xmark"></i> Reddet
+                                                    Reddet
                                                 </button>
                                             `;
                                         }
@@ -407,8 +405,9 @@
                                 </tbody>
                             </table>
 
-                            <h5 style="margin-top: 20px; margin-bottom: 12px; font-weight: 700; color: var(--danger); display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-file-medical"></i> Sağlık & Tetkik Belgeleri
+                            <!-- Sağlık & Tetkik Belgeleri Listesi -->
+                            <h5 style="margin-top: 20px; margin-bottom: 12px; font-weight: 700; color: var(--danger);">
+                                Sağlık & Tetkik Belgeleri
                             </h5>
                             <table class="docs-table">
                                 <thead>
@@ -438,10 +437,10 @@
                                         if (doc.status !== 'Yüklenmedi') {
                                             actionButtons = `
                                                 <button type="button" class="btn btn-success btn-sm btn-approve-doc" data-student-id="${app.id}" data-doc-key="${key}" style="padding: 4px 8px; font-size: 0.75rem; margin-right: 4px;">
-                                                    <i class="fa-solid fa-check"></i> Onayla
+                                                    Onayla
                                                 </button>
                                                 <button type="button" class="btn btn-danger btn-sm btn-reject-doc" data-student-id="${app.id}" data-doc-key="${key}" style="padding: 4px 8px; font-size: 0.75rem;">
-                                                    <i class="fa-solid fa-xmark"></i> Reddet
+                                                    Reddet
                                                 </button>
                                             `;
                                         }
@@ -463,12 +462,9 @@
                             </table>
                         </div>
 
-                        <!-- Sağlık & Aşı Takip Formu (7. Madde Gereği) -->
+                        <!-- Hepatit B & Aşı Takip Bilgileri -->
                         <div class="health-tracking-section" style="margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 20px;">
-                            <h5 style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-heart-pulse" style="color: var(--danger);"></i>
-                                Hepatit B & Aşı Takip Bilgileri
-                            </h5>
+                            <h5 style="margin-bottom: 12px;">Hepatit B & Aşı Takip Bilgileri</h5>
                             
                             <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px;">
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
@@ -505,7 +501,6 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Aşı Kartı & Belgesi ve Kontrolü -->
                                 <div style="border-top: 1px solid var(--border); padding-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
                                     <div>
                                         <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); display: block;">Öğrenci Aşı Kartı:</span>
@@ -529,7 +524,7 @@
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                     <h6 style="margin: 0; font-size: 0.9rem; color: var(--text-main);">Aşı Doz Geçmişi / Planı</h6>
                                     <button type="button" class="btn btn-outline btn-sm btn-add-dose" data-student-id="${app.id}">
-                                        <i class="fa-solid fa-plus"></i> Doz Ekle
+                                        Doz Ekle
                                     </button>
                                 </div>
                                 
@@ -568,7 +563,7 @@
                                                     </td>
                                                     <td style="padding: 8px; text-align: right;">
                                                         <button type="button" class="btn btn-danger btn-sm btn-del-dose" data-student-id="${app.id}" data-dose-index="${doseIndex}" style="padding: 3px 6px; font-size: 0.75rem;">
-                                                            <i class="fa-solid fa-trash-can"></i>
+                                                            Sil
                                                         </button>
                                                     </td>
                                                 </tr>
@@ -585,10 +580,10 @@
                             </div>
                         </div>
 
-                        <!-- Staj / İşlem Onaylama Kararı (Aşağıya Taşındı) -->
+                        <!-- Staj / İşlem Onaylama Kararı -->
                         <div class="bulk-action-card" style="background: #f8fafc; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-top: 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
                             <div>
-                                <strong style="font-size: 0.95rem; color: var(--text-main);"><i class="fa-solid fa-gavel"></i> Staj Başvuru Kararı:</strong>
+                                <strong style="font-size: 0.95rem; color: var(--text-main);">Staj Başvuru Kararı:</strong>
                                 <span style="font-size: 0.85rem; color: var(--text-muted); display: block;">Öğrencinin tüm staj işlemlerini nihai olarak onaylayabilir veya reddederek Çöp Kutusuna (reddedilenlere) taşıyabilirsiniz.</span>
                             </div>
                             <div style="display: flex; gap: 10px;">
@@ -628,13 +623,8 @@
                     e.stopPropagation();
                     const studentId = btn.getAttribute('data-student-id');
                     if (window.AppDB && window.AppDB.bulkApproveApplication) {
-                        const apps = getApplications();
-                        const app = apps.find(a => a.id === studentId);
                         window.AppDB.bulkApproveApplication(studentId);
                         renderDashboard();
-                        if (app && app.email) {
-                            sendEmailNotification(app.email, app.fullName, app.studentNo, true);
-                        }
                     }
                 });
             });
@@ -647,19 +637,79 @@
                     const reason = prompt("Staj başvurusunu reddetme gerekçesini giriniz:", "Evraklar staj kurallarına uygun değildir.");
                     if (reason !== null) {
                         if (window.AppDB && window.AppDB.bulkRejectApplication) {
-                            const apps = getApplications();
-                            const app = apps.find(a => a.id === studentId);
                             window.AppDB.bulkRejectApplication(studentId, reason);
                             renderDashboard();
-                            if (app && app.email) {
-                                sendEmailNotification(app.email, app.fullName, app.studentNo, false, reason);
-                            }
                         }
                     }
                 });
             });
 
-            // Tetkik Değerlendirme Değişikliği (7. Madde Gereği)
+            // Tekil Belge Onaylama
+            listContainer.querySelectorAll('.btn-approve-doc').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const studentId = btn.getAttribute('data-student-id');
+                    const docKey = btn.getAttribute('data-doc-key');
+                    const apps = getApplications();
+                    const app = apps.find(a => a.id === studentId);
+                    if (app && app.documentsStatus && app.documentsStatus[docKey]) {
+                        app.documentsStatus[docKey].status = 'Onaylandı';
+                        delete app.documentsStatus[docKey].rejectionReason;
+                        saveApps(apps);
+                        renderDashboard();
+                    }
+                });
+            });
+
+            // Tekil Belge Reddetme
+            listContainer.querySelectorAll('.btn-reject-doc').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const studentId = btn.getAttribute('data-student-id');
+                    const docKey = btn.getAttribute('data-doc-key');
+                    const reason = prompt("Belgeyi reddetme gerekçesini giriniz:", "Belge uygun görülmedi veya okunamıyor.");
+                    if (reason !== null) {
+                        const apps = getApplications();
+                        const app = apps.find(a => a.id === studentId);
+                        if (app && app.documentsStatus && app.documentsStatus[docKey]) {
+                            app.documentsStatus[docKey].status = 'Reddedildi';
+                            app.documentsStatus[docKey].rejectionReason = reason;
+                            saveApps(apps);
+                            renderDashboard();
+                        }
+                    }
+                });
+            });
+
+            // IndexedDB Dosya Görüntüleme/İndirme Butonları
+            listContainer.querySelectorAll('.view-file-btn').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const key = btn.getAttribute('data-storage-key');
+                    const fileName = btn.getAttribute('data-file-name');
+                    if (window.FileStorage) {
+                        window.FileStorage.getFile(key).then(fileData => {
+                            if (fileData && (fileData.url || fileData.dataUrl)) {
+                                const link = document.createElement('a');
+                                link.href = fileData.dataUrl || fileData.url;
+                                link.download = fileName || 'dosya';
+                                link.target = '_blank';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            } else {
+                                alert('Dosya veritabanında bulunamadı!');
+                            }
+                        }).catch(err => {
+                            console.error(err);
+                            alert('Dosya yüklenirken hata oluştu!');
+                        });
+                    }
+                });
+            });
+
+            // Tetkik Değerlendirme Değişikliği
             listContainer.querySelectorAll('.select-hep-eval').forEach(select => {
                 select.addEventListener('change', e => {
                     const studentId = select.getAttribute('data-student-id');
@@ -668,7 +718,6 @@
                     const app = apps.find(a => a.id === studentId);
                     if (app) {
                         app.tetkikDegerlendirmeDurumu = val;
-                        // Eğer aşı gerekliyse otomatik aşı listesine al
                         if (val === 'Aşı gerekli') {
                             app.asiListesineDahilMi = 'Evet';
                         }
@@ -678,7 +727,7 @@
                 });
             });
 
-            // Aşı Listesi Katılım Değişikliği (7. Madde Gereği)
+            // Aşı Listesi Katılım Değişikliği
             listContainer.querySelectorAll('.select-vaccine-list').forEach(select => {
                 select.addEventListener('change', e => {
                     const studentId = select.getAttribute('data-student-id');
@@ -693,7 +742,7 @@
                 });
             });
 
-            // Aşı Kartı Kontrol Durumu Değişikliği (7. Madde Gereği)
+            // Aşı Kartı Kontrol Durumu Değişikliği
             listContainer.querySelectorAll('.select-vaccine-card-status').forEach(select => {
                 select.addEventListener('change', e => {
                     const studentId = select.getAttribute('data-student-id');
@@ -1302,16 +1351,12 @@
                                 </select>
                             </div>
                         </div>
-
-                        <div style="margin-bottom: 12px;">
-                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">Ders Kodu ve Adı</label>
-                            <input type="text" id="course-code-input" placeholder="Örn: HEM305 - Klinik Staj I" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="course-codename-input" placeholder="Ders Kodu ve Adı (Örn: HEM301 - Klinik Hemşirelik I)" required style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                            <button type="submit" class="btn btn-primary">Ders Ekle</button>
                         </div>
-
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">Ders Ekle</button>
                     </form>
 
-                    <h5 style="font-size: 1rem; margin-bottom: 12px;">Tanımlı Dersler Listesi</h5>
                     <div class="courses-list" style="display: flex; flex-direction: column; gap: 8px;">
             `;
 
@@ -1320,10 +1365,10 @@
             } else {
                 courses.forEach(c => {
                     html += `
-                        <div style="background: #ffffff; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                        <div style="background: #ffffff; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <strong style="color: var(--text-main); font-size: 0.95rem;">${c.codeName}</strong>
-                                <div style="font-size: 0.8rem; color: var(--text-muted);">${c.department} • ${c.term}</div>
+                                <span style="font-weight: 700; color: var(--primary); font-size: 0.85rem;">[${c.department} - ${c.term}]</span>
+                                <span style="font-weight: 600; color: var(--text-main); margin-left: 8px;">${c.codeName}</span>
                             </div>
                             <button type="button" class="btn btn-danger btn-sm btn-del-course" data-id="${c.id}">Sil</button>
                         </div>
@@ -1340,13 +1385,13 @@
                     e.preventDefault();
                     const dept = document.getElementById('course-dept-input').value;
                     const term = document.getElementById('course-term-input').value;
-                    const code = document.getElementById('course-code-input').value.trim();
+                    const codeName = document.getElementById('course-codename-input').value.trim();
 
-                    if (dept && term && code && window.AppDB.addCourse(dept, term, code)) {
-                        alert('Ders başarıyla eklendi.');
+                    if (dept && term && codeName && window.AppDB.addCourse(dept, term, codeName)) {
+                        alert('Yeni ders eklendi.');
                         renderDashboard();
                     } else {
-                        alert('Ders eklenemedi veya zaten tanımlı.');
+                        alert('Bu ders zaten ekli veya bilgiler eksik.');
                     }
                 });
             }
@@ -1354,7 +1399,7 @@
             target.querySelectorAll('.btn-del-course').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const id = btn.getAttribute('data-id');
-                    if (confirm("Bu dersi silmek istediğinize emin misiniz?")) {
+                    if (confirm(`Bu dersi silmek istediğinize emin misiniz?`)) {
                         window.AppDB.deleteCourse(id);
                         renderDashboard();
                     }
@@ -1363,7 +1408,7 @@
         }
 
         // ------------------------------------------------------------------
-        // SEKME 5: SORUMLU ÖĞRETİM ELEMANI YÖNETİMİ (Ekle / Sil)
+        // SEKME 5: SORMULU ÖĞRETİM ELEMANI YÖNETİMİ (Ekle / Sil)
         // ------------------------------------------------------------------
         function renderInstructorsTab(target) {
             const instructors = window.AppDB ? window.AppDB.getInstructors() : [];
@@ -1380,11 +1425,11 @@
                     <div class="instructors-list" style="display: flex; flex-direction: column; gap: 8px;">
             `;
 
-            instructors.forEach(ins => {
+            instructors.forEach(inst => {
                 html += `
                     <div style="background: #ffffff; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: 600; color: var(--text-main);">${ins}</span>
-                        <button type="button" class="btn btn-danger btn-sm btn-del-instructor" data-name="${ins}">Sil</button>
+                        <span style="font-weight: 600; color: var(--text-main);">${inst}</span>
+                        <button type="button" class="btn btn-danger btn-sm btn-del-instructor" data-name="${inst}">Sil</button>
                     </div>
                 `;
             });
@@ -1417,96 +1462,5 @@
                 });
             });
         }
-
-        function renderSettingsTab(target) {
-            const serviceId = localStorage.getItem('settings_emailjs_service_id') || '';
-            const templateId = localStorage.getItem('settings_emailjs_template_id') || '';
-            const publicKey = localStorage.getItem('settings_emailjs_public_key') || '';
-            const deliveryMethod = localStorage.getItem('settings_email_delivery_method') || 'simulation';
-
-            target.innerHTML = `
-                <div style="max-width: 600px;">
-                    <h4 style="font-size: 1.1rem; margin-bottom: 8px;"><i class="fa-solid fa-gears"></i> Sistem & E-posta Bildirim Ayarları</h4>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
-                        Öğrencilerin staj onay veya red durumlarında otomatik e-posta gönderim ayarlarını buradan yapabilirsiniz.
-                    </p>
-                    
-                    <form id="form-system-settings" style="background: #ffffff; padding: 20px; border: 1px solid var(--border); border-radius: var(--radius-md);">
-                        <div style="margin-bottom: 16px;">
-                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">E-posta Gönderim Yöntemi</label>
-                            <select id="setting-delivery-method" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem;">
-                                <option value="simulation" ${deliveryMethod === 'simulation' ? 'selected' : ''}>Simülasyon Modu (Sadece ekranda gösterir)</option>
-                                <option value="mailto" ${deliveryMethod === 'mailto' ? 'selected' : ''}>Outlook / Mail İstemcisi Yöntemi (Cihazın uygulamasını açar)</option>
-                                <option value="emailjs" ${deliveryMethod === 'emailjs' ? 'selected' : ''}>Gerçek Otomatik E-posta (EmailJS Servisi ile Arka Planda)</option>
-                            </select>
-                        </div>
-                        
-                        <div id="emailjs-settings-group" style="display: ${deliveryMethod === 'emailjs' ? 'block' : 'none'}; border-top: 1px dashed var(--border); padding-top: 16px; margin-top: 16px;">
-                            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius-sm); padding: 12px; font-size: 0.8rem; color: #1e3a8a; margin-bottom: 16px; line-height: 1.4;">
-                                <strong>Bilgi:</strong> Gerçek otomatik mail gönderimi için ücretsiz bir <a href="https://www.emailjs.com" target="_blank" style="text-decoration: underline; font-weight: 700; color: #1d4ed8;">EmailJS</a> hesabı açıp Gmail veya Outlook hesabınızı bağlamanız gerekmektedir. Ardından oradan alacağınız anahtarları aşağıya yazınız.
-                            </div>
-                            
-                            <div style="margin-bottom: 12px;">
-                                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">EmailJS Service ID</label>
-                                <input type="text" id="setting-service-id" placeholder="Örn: service_xxxx" value="${serviceId}" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
-                            </div>
-                            
-                            <div style="margin-bottom: 12px;">
-                                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">EmailJS Template ID</label>
-                                <input type="text" id="setting-template-id" placeholder="Örn: template_xxxx" value="${templateId}" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
-                            </div>
-                            
-                            <div style="margin-bottom: 12px;">
-                                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">EmailJS Public Key</label>
-                                <input type="text" id="setting-public-key" placeholder="Örn: user_xxxx veya public_key_xxxx" value="${publicKey}" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
-                            </div>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; font-weight: 600;">Ayarları Kaydet</button>
-                    </form>
-                </div>
-            `;
-
-            const methodSelect = document.getElementById('setting-delivery-method');
-            const emailjsGroup = document.getElementById('emailjs-settings-group');
-            
-            if (methodSelect && emailjsGroup) {
-                methodSelect.addEventListener('change', () => {
-                    emailjsGroup.style.display = methodSelect.value === 'emailjs' ? 'block' : 'none';
-                });
-            }
-
-            const form = document.getElementById('form-system-settings');
-            if (form) {
-                form.addEventListener('submit', e => {
-                    e.preventDefault();
-                    const method = document.getElementById('setting-delivery-method').value;
-                    const sId = document.getElementById('setting-service-id').value.trim();
-                    const tId = document.getElementById('setting-template-id').value.trim();
-                    const pKey = document.getElementById('setting-public-key').value.trim();
-
-                    localStorage.setItem('settings_email_delivery_method', method);
-                    localStorage.setItem('settings_emailjs_service_id', sId);
-                    localStorage.setItem('settings_emailjs_template_id', tId);
-                    localStorage.setItem('settings_emailjs_public_key', pKey);
-
-                    alert('Sistem ve E-posta ayarları başarıyla kaydedildi!');
-                    renderDashboard();
-                });
-            }
-        }
-
-        function formatDate(dateStr) {
-            if (!dateStr) return '—';
-            try {
-                const parts = dateStr.split('-');
-                if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-                return new Date(dateStr).toLocaleDateString('tr-TR');
-            } catch (e) {
-                return dateStr;
-            }
-        }
-
-        renderDashboard();
     };
 })();
