@@ -445,6 +445,7 @@ select:focus {
     height: 100%;
     opacity: 0;
     cursor: pointer;
+    z-index: 10;
 }
 
 .file-name-display {

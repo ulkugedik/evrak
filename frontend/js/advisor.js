@@ -30,8 +30,11 @@
 
         function getApplications() {
             try {
+                if (window.AppDB && window.AppDB.getAllApplications) {
+                    return window.AppDB.getAllApplications();
+                }
                 const stored = localStorage.getItem('db_applications');
-                const apps = stored ? JSON.parse(stored) : (window.AppDB ? window.AppDB.applications : []);
+                const apps = stored ? JSON.parse(stored) : [];
                 return Array.isArray(apps) ? apps : [];
             } catch (e) {
                 console.error('getApplications error:', e);
@@ -63,13 +66,18 @@
         function renderDashboard() {
             container.innerHTML = `
                 <div class="admin-panel-header" style="margin-bottom: 20px;">
-                    <div style="margin-bottom: 16px;">
-                        <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">
-                            Yönetim Paneli
-                        </h3>
-                        <p style="font-size: 0.85rem; color: var(--text-muted);">
-                            Öğrenci staj başvuruları, toplu onay/red, çöp kutusu ve sistem seçeneklerini yönetin.
-                        </p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div>
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">
+                                Yönetim Paneli
+                            </h3>
+                            <p style="font-size: 0.85rem; color: var(--text-muted);">
+                                Öğrenci staj başvuruları, toplu onay/red, çöp kutusu ve sistem seçeneklerini yönetin.
+                            </p>
+                        </div>
+                        <button type="button" class="btn btn-outline btn-sm btn-refresh-admin" style="font-weight: 600;">
+                            Listeyi Yenile
+                        </button>
                     </div>
 
                     <!-- Admin Ana Sekmeleri -->
@@ -94,6 +102,13 @@
 
                 <div id="admin-tab-content"></div>
             `;
+
+            const refreshBtn = container.querySelector('.btn-refresh-admin');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    renderDashboard();
+                });
+            }
 
             // Sekme değiştirme dinleyicileri
             container.querySelectorAll('.admin-nav-btn').forEach(btn => {
