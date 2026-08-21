@@ -6,6 +6,13 @@
  */
 
 (function() {
+    function formatDate(dateStr) {
+        if (!dateStr) return '—';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString('tr-TR');
+    }
+
     window.initDanismanPortali = function(container, userRole) {
         if (!container) return;
 
