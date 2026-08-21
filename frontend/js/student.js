@@ -1,7 +1,7 @@
 /**
  * ==========================================================================
  * Öğrenci Uygulama Evrakları Portalı - student.js
- * Form Doğrulama, Dinamik Ders Filtreleme ve Dosya Bağlantıları
+ * Form Doğrulama, Dinamik Ders Filtreleme, Hepatit B Yükleme ve Bildirimler
  * ==========================================================================
  */
 
@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ----------------------------------------------------------------------
-    // 7. BÖLÜM VE DÖNEME GÖRE DERS LİSTESİ FİLTRELEME (ADMIN TARAFINDAN EKLENEN)
+    // 7. BÖLÜM VE DÖNEME GÖRE DERS LİSTESİ FİLTRELEME
     // ----------------------------------------------------------------------
     function updateCourseOptions() {
         if (!departmentSelect || !termSelect || !courseSelect) return;
@@ -218,13 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         const display = box.querySelector('.file-name-display');
                         if (display) display.textContent = 'Tetkik Sonuç Belgesi Seçiniz (PDF/JPG)';
                         
-                        // Önizleme kutusunu temizleme
                         const existingPreview = box.parentNode.querySelector('.file-preview-box');
                         if (existingPreview) existingPreview.remove();
-                        if (hepatitisTestFileInput.dataset.objectUrl) {
-                            URL.revokeObjectURL(hepatitisTestFileInput.dataset.objectUrl);
-                            delete hepatitisTestFileInput.dataset.objectUrl;
-                        }
                     }
                     delete uploadedFileMap['hepatitisTestFile'];
                 }
@@ -264,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ----------------------------------------------------------------------
-    // YÜKLENEN 7 BELGE İÇİN DOSYA ADI VE BAĞLANTI (URL) HAZIRLAMA
+    // YÜKLENEN TÜM BELGELER İÇİN ANINDA DOSYA ADI VE BAĞLANTI SAKLAMA
     // ----------------------------------------------------------------------
     const uploadedFileMap = {};
 
@@ -276,42 +271,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 const nameDisplay = box ? box.querySelector('.file-name-display') : null;
                 const fileId = input.id;
 
-                // Eski object URL'yi bellek sızıntısını önlemek için iptal et
-                if (input.dataset.objectUrl) {
-                    URL.revokeObjectURL(input.dataset.objectUrl);
-                    delete input.dataset.objectUrl;
-                }
-
-                // Mevcut önizlemeyi kaldır
+                // Mevcut önizleme kutusunu kaldır
                 const existingPreview = box ? box.parentNode.querySelector('.file-preview-box') : null;
                 if (existingPreview) existingPreview.remove();
 
                 if (e.target.files && e.target.files.length > 0) {
                     const file = e.target.files[0];
                     const fileName = file.name;
-                    
+                    const objectUrl = URL.createObjectURL(file);
+
+                    // SENKRON OLARAK ANINDA SAKLA
+                    uploadedFileMap[fileId] = {
+                        name: fileName,
+                        url: objectUrl,
+                        type: file.type,
+                        size: file.size,
+                        file: file
+                    };
+
+                    // Asenkron DataURL saklama
                     const reader = new FileReader();
                     reader.onload = function(evt) {
-                        uploadedFileMap[fileId] = {
-                            name: fileName,
-                            url: evt.target.result // Base64 Data URL
-                        };
-                        if (window.updateProgress) window.updateProgress();
+                        if (uploadedFileMap[fileId]) {
+                            uploadedFileMap[fileId].dataUrl = evt.target.result;
+                        }
                     };
                     reader.readAsDataURL(file);
 
                     if (nameDisplay) nameDisplay.textContent = fileName;
                     if (box) box.classList.add('has-file');
 
-                    // PDF/Görsel önizleme kutusu oluşturma
+                    // Önizleme kutusu oluşturma
                     const isPdf = fileName.toLowerCase().endsWith('.pdf');
                     const isImg = fileName.toLowerCase().match(/\.(jpe?g|png|gif|webp)$/);
-                    const objectUrl = URL.createObjectURL(file);
-                    input.dataset.objectUrl = objectUrl;
-
-                    if (isPdf) {
-                        alert("PDF başarıyla eklendi!");
-                    }
 
                     const previewDiv = document.createElement('div');
                     previewDiv.className = 'file-preview-box';
@@ -325,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="file-preview-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                             <span class="file-info" style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #1e293b;">
                                 <strong style="font-size:16px; color: #10b981;">✓</strong> 
-                                <span style="color:#10b981; font-weight:bold;"><strong>PDF Başarıyla Eklendi:</strong> ${fileName}</span>
+                                <span style="color:#10b981; font-weight:bold;">Seçilen Dosya: ${fileName}</span>
                             </span>
                             <button type="button" class="btn-remove-file" style="padding: 4px 8px; font-size: 11px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">✕ Kaldır</button>
                         </div>
@@ -333,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (isPdf) {
                         previewHtml += `
-                            <div class="pdf-preview-wrapper" style="margin-top: 8px; width: 100%; height: 350px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; background: #ffffff;">
+                            <div class="pdf-preview-wrapper" style="margin-top: 8px; width: 100%; height: 300px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; background: #ffffff;">
                                 <iframe src="${objectUrl}" style="width: 100%; height: 100%; border: none;"></iframe>
                             </div>
                         `;
@@ -350,13 +342,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         box.parentNode.appendChild(previewDiv);
                     }
 
-                    // Kaldır butonu için event listener
                     previewDiv.querySelector('.btn-remove-file').addEventListener('click', () => {
                         input.value = '';
-                        if (input.dataset.objectUrl) {
-                            URL.revokeObjectURL(input.dataset.objectUrl);
-                            delete input.dataset.objectUrl;
-                        }
                         previewDiv.remove();
                         delete uploadedFileMap[fileId];
                         if (nameDisplay) nameDisplay.textContent = 'Dosya Seçiniz veya Sürükleyiniz';
@@ -376,66 +363,106 @@ document.addEventListener('DOMContentLoaded', () => {
     initFileUploads();
 
     // ----------------------------------------------------------------------
-    // FORM GÖNDERİMİ, ÖZET & TEK SAYFA PDF İÇİN DOSYA LİNKLERİ
+    // FORM GÖNDERİMİ & OLUMLU / OLUMSUZ BİLDİRİM YÖNETİMİ
     // ----------------------------------------------------------------------
     if (studentForm) {
         studentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Zorunlu alan kontrolü
+            // 1. Görünür ve Zorunlu Alanların Kontrolü
             const requiredInputs = studentForm.querySelectorAll('[required]');
             let isValid = true;
+            const missingFields = [];
+            let firstInvalidInput = null;
+            let invalidTabId = null;
 
             requiredInputs.forEach(input => {
-                if (!input.value || input.value.trim() === '') {
-                    isValid = false;
-                    input.style.borderColor = 'var(--danger)';
-                } else {
-                    input.style.borderColor = '';
+                // Görünürlük kontrolü (parent'ı display:none olan gizli alanları muaf tut)
+                const isVisible = input.offsetWidth > 0 && input.offsetHeight > 0 && input.closest('.form-group')?.style.display !== 'none' && input.closest('.tab-pane')?.classList.contains('active') !== false;
+
+                if (isVisible || input.hasAttribute('required')) {
+                    const group = input.closest('.form-group');
+                    const isGroupVisible = !group || group.style.display !== 'none';
+
+                    if (isGroupVisible && (!input.value || input.value.trim() === '')) {
+                        isValid = false;
+                        input.style.borderColor = 'var(--danger)';
+                        
+                        if (!firstInvalidInput) {
+                            firstInvalidInput = input;
+                            const pane = input.closest('.tab-pane');
+                            if (pane) invalidTabId = pane.id;
+                        }
+
+                        // Etiket adını bul
+                        let labelText = 'İsimsiz Alan';
+                        if (group) {
+                            const lbl = group.querySelector('label');
+                            if (lbl) labelText = lbl.textContent.replace('*', '').trim();
+                        }
+                        if (!missingFields.includes(labelText)) missingFields.push(labelText);
+                    } else {
+                        input.style.borderColor = '';
+                    }
                 }
             });
 
+            // T.C. Kimlik kontrolü
             const tcVal = tcNoInput ? tcNoInput.value.trim() : '';
             if (tcVal.length > 0 && tcVal.length !== 11) {
                 isValid = false;
                 if (tcNoInput) tcNoInput.style.borderColor = 'var(--danger)';
-                alert('T.C. Kimlik Numarası 11 haneli rakam olmalıdır.');
-                return;
+                missingFields.push('T.C. Kimlik Numarası (11 Rakam Olmalıdır)');
             }
 
+            // Telefon kontrolü
             const phoneVal = phoneInput ? phoneInput.value.trim() : '';
             if (phoneVal.length < 14) {
                 isValid = false;
                 if (phoneInput) phoneInput.style.borderColor = 'var(--danger)';
-                alert('Telefon numarası eksik! "05XX XXX XX XX" formatında doldurunuz.');
-                return;
+                missingFields.push('Telefon Numarası (05XX XXX XX XX Formatında Olmalıdır)');
             }
 
+            // 2. OLUMSUZ BİLDİRİM (Form Gönderilmediyse)
             if (!isValid) {
-                alert('Lütfen tüm zorunlu alanları doğru ve eksiksiz doldurunuz.');
+                let errorMsg = "GÖNDERİLMEDİ (OLUMSUZ):\n\nBaşvurunuz eksik veya hatalı bilgiler nedeniyle gönderilemedi.\nLütfen aşağıdaki alanları tamamlayınız:\n\n";
+                missingFields.forEach(item => {
+                    errorMsg += "• " + item + "\n";
+                });
+                alert(errorMsg);
+
+                // İlgili sekmeye otomatik geç ve odağı o alana ver
+                if (invalidTabId) {
+                    const tabBtn = document.querySelector(`.tab-btn[data-tab="${invalidTabId}"]`);
+                    if (tabBtn) tabBtn.click();
+                }
+                if (firstInvalidInput) {
+                    firstInvalidInput.focus();
+                }
                 return;
             }
 
+            // 3. BAŞVURU KAYIT SÜRECİ
             const formData = new FormData(studentForm);
             const appId = 'APP-' + Date.now();
 
-            // Dosyaları IndexedDB'ye kaydet ve tamamlanmasını bekle
-            const fileSavePromises = [];
+            // Dosya Kaydetme (IndexedDB)
             const fileKeys = ['doc1_file', 'doc2_file', 'doc3_file', 'doc4_file', 'doc5_file', 'doc6_file', 'doc7_file', 'hepatitisTestFile', 'vaccineCardFile'];
             
-            fileKeys.forEach(key => {
+            for (const key of fileKeys) {
                 const fileData = uploadedFileMap[key];
                 if (fileData) {
-                    fileSavePromises.push(window.FileStorage.saveFile(`${appId}_${key}`, fileData));
+                    try {
+                        const payload = {
+                            name: fileData.name,
+                            url: fileData.dataUrl || fileData.url || '',
+                            type: fileData.type || ''
+                        };
+                        await window.FileStorage.saveFile(`${appId}_${key}`, payload);
+                    } catch (err) {
+                        console.warn(`[FileStorage Warning] ${key} kaydedilirken uyarı:`, err);
+                    }
                 }
-            });
-
-            try {
-                await Promise.all(fileSavePromises);
-            } catch (err) {
-                console.error('Dosyalar kaydedilirken hata oluştu:', err);
-                alert('Dosyalar kaydedilemedi! Lütfen tekrar deneyiniz.');
-                return;
             }
 
             const studentRecord = {
@@ -503,7 +530,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.AppDB.saveStudentApplication(studentRecord);
             }
 
-            // Dosya Linkleri Listesi HTML'i Hazırla (PDF çıktısı için)
+            // 4. OLUMLU BİLDİRİM (Başvuru Başarıyla Gönderildi)
+            alert("BAŞARILI (OLUMLU):\n\nBaşvurunuz ve yüklediğiniz tüm uygulama belgeleriniz başarıyla sisteme iletilmiştir.\nBaşvurunuz yönetici panelinde görünmektedir.");
+
+            // PDF çıktısı ve özet için linkler
             const docTitles = {
                 doc1_file: "16 Saatlik İSG Eğitimi Belgesi",
                 doc2_file: "İşe Giriş / Periyodik Muayene Formu",
@@ -545,14 +575,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (summaryContent) {
                 let hepStatusText = studentRecord.hepatitisTested === 'Evet' 
-                    ? `Evet (Tarih: ${new Date(studentRecord.hepatitisTestDate).toLocaleDateString('tr-TR')})` 
+                    ? `Evet (Tarih: ${studentRecord.hepatitisTestDate ? new Date(studentRecord.hepatitisTestDate).toLocaleDateString('tr-TR') : '—'})` 
                     : 'Hayır, Yapılmadı';
 
                 summaryContent.innerHTML = `
                     <div class="pdf-print-container" style="font-size: 0.85rem; line-height: 1.4;">
                         <div style="border-bottom: 2px solid #2563eb; padding-bottom: 8px; margin-bottom: 12px; text-align: center;">
                             <h3 style="font-size: 1.1rem; color: #0f172a; margin: 0;">Sağlık Bilimleri Uygulama ve Staj Formu</h3>
-                            <span style="font-size: 0.75rem; color: #64748b;">Balıkesir Üniversitesi - Başvuru Kayıt Raporu</span>
+                            <span style="font-size: 0.75rem; color: #64748b;">Başvuru Kayıt Raporu</span>
                         </div>
 
                         <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
@@ -604,7 +634,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             }
 
-            alert("Form başarıyla gönderildi!");
             if (successModal) successModal.classList.add('active');
         });
     }

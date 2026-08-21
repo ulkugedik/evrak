@@ -6,44 +6,7 @@
 
 window.AppDB = {
     // Öğrenci Başvuruları Koleksiyonu
-    applications: JSON.parse(localStorage.getItem('db_applications') || JSON.stringify([
-        {
-            id: 'APP-1700000000001',
-            isTrash: false,
-            studentNo: '2024105001',
-            fullName: 'Ayşe Yılmaz',
-            tcNo: '12345678901',
-            department: 'Hemşirelik',
-            studentClass: '3. Sınıf',
-            phone: '0555 123 45 67',
-            email: 'ayse.yilmaz@ogrenci.edu.tr',
-            academicAdvisor: 'Prof. Dr. Ahmet Yılmaz',
-            academicYear: '2026-2027',
-            term: 'Güz',
-            courseNameCode: 'HEM301 - Klinik Hemşirelik Uygulaması I',
-            institution: 'Üniversite Eğitim ve Araştırma Hastanesi',
-            unitName: 'Dahiliye Servisi',
-            applicationDays: 'Pazartesi, Salı',
-            responsibleInstructor: 'Prof. Dr. Fatma Yıldız',
-            hepatitisTested: 'Evet',
-            hepatitisTestDate: '2026-01-15',
-            tetkikDegerlendirmeDurumu: 'Sonuç bekleniyor',
-            asiListesineDahilMi: 'Hayır',
-            vaccineDoses: [],
-            documentsStatus: {
-                isgCertificate: { status: 'Bekliyor', date: '2026-01-10', fileName: 'isg_sertifikasi.pdf' },
-                medicalForm: { status: 'Bekliyor', date: '2026-01-12', expiryDate: '2027-01-12', fileName: 'ise_giris_formu.pdf' },
-                privacyAgreement: { status: 'Bekliyor', physicalCount: 1, fileName: 'gizlilik_sozlesmesi.pdf' },
-                idCard: { status: 'Bekliyor', fileName: 'kimlik_fotokopisi.jpg' },
-                hemogram: { status: 'Bekliyor', date: '2026-01-15', fileName: 'hemogram_sonuc.pdf' },
-                elisa: { status: 'Bekliyor', date: '2026-01-15', fileName: 'elisa_sonuc.pdf' },
-                chestXray: { status: 'Bekliyor', date: '2026-01-15', fileName: 'akciger_grafi.pdf' },
-                hepatitisTest: { status: 'Bekliyor', date: '2026-01-15', fileName: 'hepatitis_sonuc.pdf' },
-                vaccineCard: { status: 'Yüklenmedi' }
-            },
-            submissionDate: '2026-01-16T10:00:00.000Z'
-        }
-    ])),
+    applications: [],
 
     // Danışman Listesi
     advisors: JSON.parse(localStorage.getItem('db_advisors') || JSON.stringify([
@@ -70,6 +33,62 @@ window.AppDB = {
         { id: 'c4', department: 'Fizyoterapi ve Rehabilitasyon', term: 'Bahar', codeName: 'FTR401 - Klinik Fizyoterapi Stajı' },
         { id: 'c5', department: 'Tıp Fakültesi', term: 'Yaz Okulu / Staj', codeName: 'TIP501 - İç Hastalıkları Stajı' }
     ])),
+
+    // Tüm Başvuruları Güncel Olarak Getir
+    getAllApplications: function() {
+        try {
+            const stored = localStorage.getItem('db_applications');
+            if (stored) {
+                this.applications = JSON.parse(stored);
+            } else {
+                this.applications = [];
+            }
+        } catch (e) {
+            console.error('[DB] getAllApplications parse error:', e);
+            if (!Array.isArray(this.applications)) this.applications = [];
+        }
+        return this.applications;
+    },
+
+    saveApplicationsToStorage: function() {
+        try {
+            localStorage.setItem('db_applications', JSON.stringify(this.applications));
+        } catch (e) {
+            console.error('[DB] saveApplicationsToStorage error:', e);
+        }
+    },
+
+    // Yeni Öğrenci Uygulama Başvurusu Kaydet
+    saveStudentApplication: function(data) {
+        // En güncel veriyi çek
+        this.getAllApplications();
+
+        const record = {
+            id: data.id || 'APP-' + Date.now(),
+            isTrash: false,
+            ...data,
+            tetkikDegerlendirmeDurumu: 'Sonuç bekleniyor',
+            asiListesineDahilMi: 'Hayır',
+            vaccineDoses: [],
+            documentsStatus: {
+                isgCertificate: { status: 'Bekliyor', date: data.doc1_date || null, fileName: data.doc1_file_name || null, fileUrl: data.doc1_file_url || null },
+                medicalForm: { status: 'Bekliyor', date: data.doc2_examDate || null, expiryDate: data.doc2_expiryDate || null, fileName: data.doc2_file_name || null, fileUrl: data.doc2_file_url || null },
+                privacyAgreement: { status: 'Bekliyor', physicalCount: data.doc3_physicalCount || 0, fileName: data.doc3_file_name || null, fileUrl: data.doc3_file_url || null },
+                idCard: { status: 'Bekliyor', fileName: data.doc4_file_name || null, fileUrl: data.doc4_file_url || null },
+                hemogram: { status: 'Bekliyor', date: data.doc5_date || null, fileName: data.doc5_file_name || null, fileUrl: data.doc5_file_url || null },
+                elisa: { status: 'Bekliyor', date: data.doc6_date || null, fileName: data.doc6_file_name || null, fileUrl: data.doc6_file_url || null },
+                chestXray: { status: 'Bekliyor', date: data.doc7_date || null, fileName: data.doc7_file_name || null, fileUrl: data.doc7_file_url || null },
+                hepatitisTest: { status: data.hepatitisTested === 'Evet' ? 'Bekliyor' : 'Yüklenmedi', date: data.hepatitisTestDate || null, fileName: data.hepatitisTest_file_name || null, fileUrl: data.hepatitisTest_file_url || null },
+                vaccineCard: { status: data.vaccineCard_file_name ? 'Bekliyor' : 'Yüklenmedi', fileName: data.vaccineCard_file_name || null, fileUrl: data.vaccineCard_file_url || null }
+            },
+            createdAt: new Date().toISOString()
+        };
+
+        this.applications.push(record);
+        this.saveApplicationsToStorage();
+        console.log('[DB] Yeni başvuru başarıyla kaydedildi:', record);
+        return record;
+    },
 
     // Akademik Danışman İşlemleri
     getAdvisors: function() {
@@ -132,46 +151,9 @@ window.AppDB = {
         return true;
     },
 
-    // Yeni Öğrenci Uygulama Başvurusu Kaydet
-    saveStudentApplication: function(data) {
-        const record = {
-            id: data.id || 'APP-' + Date.now(),
-            isTrash: false,
-            ...data,
-            tetkikDegerlendirmeDurumu: 'Sonuç bekleniyor',
-            asiListesineDahilMi: 'Hayır',
-            vaccineDoses: [],
-            documentsStatus: {
-                isgCertificate: { status: 'Bekliyor', date: data.doc1_date || null, fileName: data.doc1_file_name || null, fileUrl: data.doc1_file_url || null },
-                medicalForm: { status: 'Bekliyor', date: data.doc2_examDate || null, expiryDate: data.doc2_expiryDate || null, fileName: data.doc2_file_name || null, fileUrl: data.doc2_file_url || null },
-                privacyAgreement: { status: 'Bekliyor', physicalCount: data.doc3_physicalCount || 0, fileName: data.doc3_file_name || null, fileUrl: data.doc3_file_url || null },
-                idCard: { status: 'Bekliyor', fileName: data.doc4_file_name || null, fileUrl: data.doc4_file_url || null },
-                hemogram: { status: 'Bekliyor', date: data.doc5_date || null, fileName: data.doc5_file_name || null, fileUrl: data.doc5_file_url || null },
-                elisa: { status: 'Bekliyor', date: data.doc6_date || null, fileName: data.doc6_file_name || null, fileUrl: data.doc6_file_url || null },
-                chestXray: { status: 'Bekliyor', date: data.doc7_date || null, fileName: data.doc7_file_name || null, fileUrl: data.doc7_file_url || null },
-                hepatitisTest: { status: data.hepatitisTested === 'Evet' ? 'Bekliyor' : 'Yüklenmedi', date: data.hepatitisTestDate || null, fileName: data.hepatitisTest_file_name || null, fileUrl: data.hepatitisTest_file_url || null },
-                vaccineCard: { status: data.vaccineCard_file_name ? 'Bekliyor' : 'Yüklenmedi', fileName: data.vaccineCard_file_name || null, fileUrl: data.vaccineCard_file_url || null }
-            },
-            createdAt: new Date().toISOString()
-        };
-
-        this.applications.push(record);
-        this.saveApplicationsToStorage();
-        console.log('[DB] Yeni başvuru kaydedildi:', record);
-        return record;
-    },
-
-    // Tüm Başvuruları Getir
-    getAllApplications: function() {
-        return this.applications;
-    },
-
-    saveApplicationsToStorage: function() {
-        localStorage.setItem('db_applications', JSON.stringify(this.applications));
-    },
-
     // Toplu Onaylama
     bulkApproveApplication: function(studentId) {
+        this.getAllApplications();
         const app = this.applications.find(a => a.id === studentId);
         if (app && app.documentsStatus) {
             Object.keys(app.documentsStatus).forEach(k => {
@@ -188,6 +170,7 @@ window.AppDB = {
 
     // Toplu Reddetme ve Çöp Kutusuna Gönderme
     bulkRejectApplication: function(studentId, reason) {
+        this.getAllApplications();
         const app = this.applications.find(a => a.id === studentId);
         if (app) {
             app.isTrash = true;
@@ -206,6 +189,7 @@ window.AppDB = {
 
     // Çöp Kutusundan Geri Yükle
     restoreApplication: function(studentId) {
+        this.getAllApplications();
         const app = this.applications.find(a => a.id === studentId);
         if (app) {
             app.isTrash = false;
@@ -224,16 +208,16 @@ window.AppDB = {
 
     // Kalıcı Olarak Sil
     deletePermanently: function(studentId) {
+        this.getAllApplications();
         this.applications = this.applications.filter(a => a.id !== studentId);
         this.saveApplicationsToStorage();
         return true;
     }
 };
 
-// Sayfa ilk açıldığında varsayılan verileri localStorage'a kaydet
-if (!localStorage.getItem('db_applications')) {
-    localStorage.setItem('db_applications', JSON.stringify(window.AppDB.applications));
-}
+// İlk çalıştırma senkronizasyonu
+window.AppDB.getAllApplications();
+
 if (!localStorage.getItem('db_advisors')) {
     localStorage.setItem('db_advisors', JSON.stringify(window.AppDB.advisors));
 }
@@ -244,7 +228,7 @@ if (!localStorage.getItem('db_courses')) {
     localStorage.setItem('db_courses', JSON.stringify(window.AppDB.courses));
 }
 
-// IndexedDB Dosya Depolama Sistemi (5MB Sınırını Aşmak İçin)
+// IndexedDB Dosya Depolama Sistemi
 window.FileStorage = {
     dbName: 'StudentEvrakStorage',
     dbVersion: 1,
@@ -252,71 +236,69 @@ window.FileStorage = {
     db: null,
 
     init: function() {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             if (this.db) return resolve(this.db);
-            const request = indexedDB.open(this.dbName, this.dbVersion);
-            request.onerror = (event) => reject(event.target.error);
-            request.onsuccess = (event) => {
-                this.db = event.target.result;
-                resolve(this.db);
-            };
-            request.onupgradeneeded = (event) => {
-                const db = event.target.result;
-                if (!db.objectStoreNames.contains(this.storeName)) {
-                    db.createObjectStore(this.storeName);
-                }
-            };
+            try {
+                const request = indexedDB.open(this.dbName, this.dbVersion);
+                request.onerror = (event) => {
+                    console.warn('[FileStorage] IndexedDB open error:', event.target.error);
+                    resolve(null);
+                };
+                request.onsuccess = (event) => {
+                    this.db = event.target.result;
+                    resolve(this.db);
+                };
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(this.storeName)) {
+                        db.createObjectStore(this.storeName);
+                    }
+                };
+            } catch (e) {
+                console.warn('[FileStorage] IndexedDB init catch:', e);
+                resolve(null);
+            }
         });
     },
 
     saveFile: function(key, fileData) {
-        return this.init().then(() => {
-            return new Promise((resolve, reject) => {
-                const transaction = this.db.transaction([this.storeName], 'readwrite');
-                const store = transaction.objectStore(this.storeName);
-                const request = store.put(fileData, key);
-                request.onsuccess = () => resolve();
-                request.onerror = (event) => reject(event.target.error);
+        if (!fileData) return Promise.resolve();
+        return this.init().then(db => {
+            if (!db) return Promise.resolve();
+            return new Promise((resolve) => {
+                try {
+                    const transaction = db.transaction([this.storeName], 'readwrite');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.put(fileData, key);
+                    request.onsuccess = () => resolve();
+                    request.onerror = (event) => {
+                        console.warn('[FileStorage] put error:', event.target.error);
+                        resolve();
+                    };
+                } catch (e) {
+                    console.warn('[FileStorage] saveFile error:', e);
+                    resolve();
+                }
             });
         });
     },
 
     getFile: function(key) {
-        return this.init().then(() => {
-            return new Promise((resolve, reject) => {
-                const transaction = this.db.transaction([this.storeName], 'readonly');
-                const store = transaction.objectStore(this.storeName);
-                const request = store.get(key);
-                request.onsuccess = (event) => resolve(event.target.result);
-                request.onerror = (event) => reject(event.target.error);
-            });
-        });
-    },
-
-    deleteFile: function(key) {
-        return this.init().then(() => {
-            return new Promise((resolve, reject) => {
-                const transaction = this.db.transaction([this.storeName], 'readwrite');
-                const store = transaction.objectStore(this.storeName);
-                const request = store.delete(key);
-                request.onsuccess = () => resolve();
-                request.onerror = (event) => reject(event.target.error);
-            });
-        });
-    },
-
-    clearAll: function() {
-        return this.init().then(() => {
-            return new Promise((resolve, reject) => {
-                const transaction = this.db.transaction([this.storeName], 'readwrite');
-                const store = transaction.objectStore(this.storeName);
-                const request = store.clear();
-                request.onsuccess = () => resolve();
-                request.onerror = (event) => reject(event.target.error);
+        return this.init().then(db => {
+            if (!db) return Promise.resolve(null);
+            return new Promise((resolve) => {
+                try {
+                    const transaction = db.transaction([this.storeName], 'readonly');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.get(key);
+                    request.onsuccess = (event) => resolve(event.target.result || null);
+                    request.onerror = () => resolve(null);
+                } catch (e) {
+                    resolve(null);
+                }
             });
         });
     }
 };
 
-// IndexedDB Başlat
-window.FileStorage.init().catch(console.error);
+window.FileStorage.init().catch(console.warn);
