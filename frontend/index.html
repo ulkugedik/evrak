@@ -550,40 +550,6 @@
         </div>
     </div>
 
-    <!-- Email Simulation Modal -->
-    <div class="modal-overlay" id="emailModal" style="z-index: 1200;">
-        <div class="modal-card" style="max-width: 500px; border-top: 5px solid var(--primary);">
-            <div class="modal-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
-                <div style="background: #eff6ff; padding: 10px; border-radius: 50%; color: #3b82f6; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fa-solid fa-paper-plane" style="font-size: 1.25rem;"></i>
-                </div>
-                <div>
-                    <h2 style="font-size: 1.15rem; margin: 0; color: var(--text-main);">E-posta Bildirimi Gönderiliyor...</h2>
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Öğrenciye durum bilgilendirme e-postası hazırlanıyor.</p>
-                </div>
-            </div>
-            <div class="modal-body" style="padding-top: 10px;">
-                <div id="email-sending-state" style="text-align: center; padding: 20px 0;">
-                    <div class="spinner"></div>
-                    <p style="font-size: 0.9rem; font-weight: 600; color: var(--text-main);">E-posta sunucusu ile güvenli bağlantı kuruluyor...</p>
-                </div>
-                
-                <div id="email-sent-state" style="display: none;">
-                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-md); padding: 12px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: #16a34a; font-weight: 600; font-size: 0.875rem;">
-                        <i class="fa-solid fa-circle-check"></i> Sistem bildirimi e-postası başarıyla sıraya alındı ve iletildi!
-                    </div>
-                    <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; font-size: 0.825rem; font-family: monospace; white-space: pre-wrap; color: #334155; line-height: 1.5; max-height: 250px; overflow-y: auto; text-align: left;" id="emailPreviewContent"></div>
-                </div>
-            </div>
-            <div class="modal-footer" style="justify-content: flex-end; gap: 8px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 14px;">
-                <button type="button" class="btn btn-secondary" id="btn-close-email-modal" style="display: none;">Kapat</button>
-                <button type="button" class="btn btn-primary" id="btn-trigger-mailto" style="display: none; display: flex; align-items: center; gap: 6px;">
-                    <i class="fa-solid fa-envelope"></i> Outlook/Mail ile Gönder
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Script Imports -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="js/db.js"></script>
