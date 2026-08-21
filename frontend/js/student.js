@@ -554,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 4. OLUMLU BİLDİRİM (Başvuru Başarıyla Gönderildi)
-            alert("BAŞARILI:\n\nBaşvurunuz ve yüklediğiniz tüm belgeler başarıyla sisteme kaydedildi ve Yönetici Paneline iletildi.");
+            alert("BAŞARILI (OLUMLU):\n\nBaşvurunuz ve yüklediğiniz tüm belgeler başarıyla sisteme kaydedildi ve Yönetici Paneline iletildi.");
 
             // PDF çıktısı ve özet için linkler
             const docTitles = {
@@ -603,6 +603,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 summaryContent.innerHTML = `
                     <div class="pdf-print-container" style="font-size: 0.85rem; line-height: 1.4;">
+                        <div style="border-bottom: 2px solid #2563eb; padding-bottom: 8px; margin-bottom: 12px; text-align: center;">
+                            <h3 style="font-size: 1.1rem; color: #0f172a; margin: 0;">Sağlık Bilimleri Uygulama ve Staj Formu</h3>
+                            <span style="font-size: 0.75rem; color: #64748b;">Başvuru Kayıt Raporu</span>
+                        </div>
+
                         <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
                             <tr>
                                 <td style="padding: 4px 8px; border: 1px solid #cbd5e1; font-weight: 700; width: 35%; background: #f8fafc;">Öğrenci Adı Soyadı:</td>
