@@ -309,6 +309,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const objectUrl = URL.createObjectURL(file);
                     input.dataset.objectUrl = objectUrl;
 
+                    if (isPdf) {
+                        alert("PDF başarıyla eklendi!");
+                    }
+
                     const previewDiv = document.createElement('div');
                     previewDiv.className = 'file-preview-box';
                     previewDiv.style.marginTop = '10px';
@@ -321,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="file-preview-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                             <span class="file-info" style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #1e293b;">
                                 <strong style="font-size:16px; color: #10b981;">✓</strong> 
-                                <span><strong>Seçildi:</strong> ${fileName}</span>
+                                <span style="color:#10b981; font-weight:bold;"><strong>PDF Başarıyla Eklendi:</strong> ${fileName}</span>
                             </span>
                             <button type="button" class="btn-remove-file" style="padding: 4px 8px; font-size: 11px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">✕ Kaldır</button>
                         </div>
@@ -600,6 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             }
 
+            alert("Form başarıyla gönderildi!");
             if (successModal) successModal.classList.add('active');
         });
     }
